@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	width := 600
+	width := 1000
 	height := width
 
 	pixelSource := engine.Prepare(width)

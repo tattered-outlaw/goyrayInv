@@ -5,29 +5,12 @@ import (
 )
 
 func Prepare(canvasPixels int) *Scene {
-	x := NScene(canvasPixels, 10.0, 7.0, NSphere(), Point(0, 0, -5))
+	shape := NSphere()
+	//shape.translateX(1)
+	//shape.scaleY(1.5)
+	shape.setMaterial(DefaultMaterial())
+	x := NScene(canvasPixels, 10.0, 15.0, shape, Point(0, 0, -5))
 	return x
-}
-
-type CheckboxSource struct {
-	width, height, squareSize int
-	even, odd                 color.Color
-}
-
-func (c *CheckboxSource) GetPixel(x, y int) color.Color {
-	columnParity := -1
-	if (x/c.squareSize)%2 == 0 {
-		columnParity = 1
-	}
-	rowParity := -1
-	if (y/c.squareSize)%2 == 0 {
-		rowParity = 1
-	}
-	if columnParity*rowParity == 1 {
-		return c.even
-	} else {
-		return c.odd
-	}
 }
 
 type Scene struct {
@@ -50,17 +33,18 @@ func NScene(canvasPixels int, wallZ float64, wallSize float64, shape Shape, rayO
 		pixelSize:    wallSize / float64(canvasPixels),
 		halfWallSize: wallSize / 2.0,
 	}
+	shape.calculateInverseTransformation()
 	return &scene
 }
 
 func (s *Scene) GetPixel(x, y int) color.Color {
-	s.shape.calculateInverseTransformation()
 
 	worldX := -s.halfWallSize + s.pixelSize*float64(x)
 	worldY := s.halfWallSize - s.pixelSize*float64(y)
 
 	position := Point(worldX, worldY, s.wallZ)
-	ray, _ := NRay(s.rayOrigin, position.Sub(s.rayOrigin).Normalize())
+	ray, _ := NRay(s.rayOrigin, position.Sub(s.rayOrigin))
+	ray, _ = ray.TransformToShape(s.shape)
 	intersects := s.shape.intersect(ray)
 	if len(intersects) == 0 {
 		return LightCyan

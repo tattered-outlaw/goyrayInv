@@ -24,3 +24,11 @@ func (s *Sphere) intersect(ray Ray) []Intersect {
 		return []Intersect{{T: t1, Shape: s}, {T: t2, Shape: s}}
 	}
 }
+
+func (s *Sphere) normalAt(worldPoint Tuple) Tuple {
+	objectPoint := s.inverseTransformation.MulT(worldPoint)
+	objectNormal := objectPoint.Sub(Point(0, 0, 0))
+	worldNormal := s.inverseTransformation.Transpose().MulT(objectNormal)
+	worldNormal[3] = 0
+	return worldNormal.Normalize()
+}

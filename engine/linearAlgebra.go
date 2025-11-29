@@ -68,7 +68,7 @@ func Vector(x, y, z float64) Tuple {
 type Matrix2x2 [2][2]float64
 
 func (m Matrix2x2) Determinant() float64 {
-	return m[0][0]*m[1][1] - m[1][0]*m[0][1]
+	return m[0][0]*m[1][1] - m[0][1]*m[1][0]
 }
 
 type Matrix3x3 [3][3]float64
@@ -87,7 +87,7 @@ func (m Matrix3x3) Submatrix(row, column int) Matrix2x2 {
 				skipColumn = 1
 				continue
 			}
-			result[c-skipColumn][r-skipRow] = m[c][r]
+			result[r-skipRow][c-skipColumn] = m[r][c]
 		}
 	}
 	return result
@@ -109,7 +109,7 @@ func (m Matrix3x3) CoFactor(row, column int) float64 {
 func (m Matrix3x3) Determinant() float64 {
 	result := 0.0
 	for c := 0; c < 3; c++ {
-		result += m[c][0] * m.CoFactor(0, c)
+		result += m[0][c] * m.CoFactor(0, c)
 	}
 	return result
 }
@@ -130,7 +130,7 @@ func (m Matrix4x4) Submatrix(row, column int) Matrix3x3 {
 				skipColumn = 1
 				continue
 			}
-			result[c-skipColumn][r-skipRow] = m[c][r]
+			result[r-skipRow][c-skipColumn] = m[r][c]
 		}
 	}
 	return result
@@ -152,7 +152,7 @@ func (m Matrix4x4) CoFactor(row, column int) float64 {
 func (m Matrix4x4) Determinant() float64 {
 	result := 0.0
 	for c := 0; c < 4; c++ {
-		result += m[c][0] * m.CoFactor(0, c)
+		result += m[0][c] * m.CoFactor(0, c)
 	}
 	return result
 
@@ -166,21 +166,21 @@ var Identity4 = Matrix4x4{
 }
 
 func (m Matrix4x4) MulT(t Tuple) Tuple {
-	return Tuple{
-		m[0][0]*t[0] + m[1][0]*t[1] + m[2][0]*t[2] + m[3][0]*t[3],
-		m[0][1]*t[0] + m[1][1]*t[1] + m[2][1]*t[2] + m[3][1]*t[3],
-		m[0][2]*t[0] + m[1][2]*t[1] + m[2][2]*t[2] + m[3][2]*t[3],
-		m[0][3]*t[0] + m[1][3]*t[1] + m[2][3]*t[2] + m[3][3]*t[3],
+	result := Tuple{}
+	for r := 0; r < 4; r++ {
+		result[r] = m[r][0]*t[0] + m[r][1]*t[1] + m[r][2]*t[2] + m[r][3]*t[3]
 	}
+	return result
 }
 
 func (m Matrix4x4) Transpose() Matrix4x4 {
-	return Matrix4x4{
-		{m[0][0], m[0][1], m[0][2], m[0][3]},
-		{m[1][0], m[1][1], m[1][2], m[1][3]},
-		{m[2][0], m[2][1], m[2][2], m[2][3]},
-		{m[3][0], m[3][1], m[3][2], m[3][3]},
+	result := Matrix4x4{}
+	for r := 0; r < 4; r++ {
+		for c := 0; c < 4; c++ {
+			result[r][c] = m[c][r]
+		}
 	}
+	return result
 }
 
 func (m Matrix4x4) Mul(n Matrix4x4) Matrix4x4 {
@@ -202,7 +202,7 @@ func (m Matrix4x4) Inverse() (Matrix4x4, error) {
 	for r := 0; r < 4; r++ {
 		for c := 0; c < 4; c++ {
 			cf := m.CoFactor(r, c)
-			result[r][c] = cf / det
+			result[c][r] = cf / det
 		}
 	}
 	return result, nil
@@ -314,16 +314,3 @@ func RotationZ(theta float64) Matrix4x4 {
 func (m Matrix4x4) RotateZ(theta float64) Matrix4x4 {
 	return m.Mul(RotationZ(theta))
 }
-
-//TODO delete these
-//func do(s Shape) {
-//	s.translateX(10)
-//}
-//
-//func Do2() {
-//	sphere := NSphere()
-//	spherec := sphere
-//	spherec.radius = 7
-//	do(&spherec)
-//	fmt.Printf("%v  %v", sphere, spherec)
-//}
