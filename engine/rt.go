@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"fmt"
+	"math"
 )
 
 type Ray struct {
@@ -9,30 +9,22 @@ type Ray struct {
 	Direction Tuple
 }
 
-func NRay(origin, direction Tuple) (Ray, error) {
+func NRay(origin, direction Tuple) Ray {
 	result := Ray{}
-	if !origin.IsPoint() {
-		return result, fmt.Errorf("origin must be a point")
-	}
-	if !direction.IsVector() {
-		return result, fmt.Errorf("direction must be a vector")
-	}
 	result.Origin = origin
 	result.Direction = direction
-	return result, nil
+	return result
 }
 
-func (r Ray) Position(t float64) Tuple {
+func (r *Ray) Position(t float64) Tuple {
 	return r.Origin.Add(r.Direction.Scale(t))
 }
 
-func (r Ray) TransformToShape(s Shape) (Ray, error) {
+func (r *Ray) TransformToShape(s Shape) {
 	t := s.getInverseTransformation()
-	result, err := NRay(t.MulT(r.Origin), t.MulT(r.Direction).Normalize())
-	if err != nil {
-		panic(err)
-	}
-	return result, err
+	newRay := NRay(t.MulT(r.Origin), t.MulT(r.Direction))
+	r.Origin = newRay.Origin
+	r.Direction = newRay.Direction
 }
 
 type Intersect struct {
@@ -74,6 +66,24 @@ func DefaultMaterial() Material {
 	return Material{Color: Color{1, 1, 1}, Ambient: 0.1, Diffuse: 0.9, Specular: 0.9, Shininess: 200.0}
 }
 
-func lighting(material Material, light PointLight, point Tuple, eyeV Tuple, normalV Tuple) {
+func lighting(material Material, light PointLight, point Tuple, eyeV Tuple, normalV Tuple) Color {
+	effectiveColor := material.Color.Multiply(light.Intensity)
+	lightV := light.Position.Sub(point).Normalize()
+	ambient := effectiveColor.Scale(material.Ambient)
+	lightDotNormal := lightV.Dot(normalV)
+	diffuse := Black
+	specular := Black
+	if lightDotNormal >= 0 {
+		diffuse = effectiveColor.Scale(material.Diffuse * lightDotNormal)
+		reflectV := reflect(lightV.Scale(-1), normalV)
+		reflectDotEye := reflectV.Dot(eyeV)
+		if reflectDotEye > 0 {
+			specular = light.Intensity.Scale(material.Specular * math.Pow(reflectDotEye, material.Shininess))
+		}
+	}
+	return ambient.Add(diffuse).Add(specular)
+}
 
+func reflect(in Tuple, normal Tuple) Tuple {
+	return in.Sub(normal.Scale(2 * in.Dot(normal)))
 }

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"os"
+	"time"
 
 	"goray/engine"
 )
@@ -12,10 +14,12 @@ import (
 func main() {
 	width := 1000
 	height := width
-
+	fmt.Println("starting rendering...")
+	start := time.Now().UnixMilli()
 	pixelSource := engine.Prepare(width)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
 	render(width, height, pixelSource, pngWriter)
+	fmt.Printf("rendering done in %d ms\n", time.Now().UnixMilli()-start)
 	pngWriter.save("image")
 }
 

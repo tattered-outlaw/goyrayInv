@@ -7,10 +7,15 @@ type Sphere struct {
 }
 
 func NSphere() *Sphere {
-	return &Sphere{BaseShape: BaseShape{transformation: Identity4}}
+	return &Sphere{BaseShape{
+		transformation:        Identity4,
+		inverseTransformation: Identity4,
+		material:              DefaultMaterial(),
+	}}
 }
 
 func (s *Sphere) intersect(ray Ray) []Intersect {
+	ray.TransformToShape(s)
 	sphereToRay := ray.Origin.Sub(Point(0, 0, 0))
 	a := ray.Direction.Dot(ray.Direction)
 	b := 2 * ray.Direction.Dot(sphereToRay)
@@ -26,9 +31,9 @@ func (s *Sphere) intersect(ray Ray) []Intersect {
 }
 
 func (s *Sphere) normalAt(worldPoint Tuple) Tuple {
-	objectPoint := s.inverseTransformation.MulT(worldPoint)
+	objectPoint := s.getInverseTransformation().MulT(worldPoint)
 	objectNormal := objectPoint.Sub(Point(0, 0, 0))
-	worldNormal := s.inverseTransformation.Transpose().MulT(objectNormal)
+	worldNormal := s.getInverseTransformation().Transpose().MulT(objectNormal)
 	worldNormal[3] = 0
 	return worldNormal.Normalize()
 }
