@@ -1,14 +1,12 @@
 package engine
 
 import (
-	la "goray/linearAlgebra"
 	"image/color"
 )
 
-func Prepare(width, height int) *CheckboxSource {
-	lightCyan := la.Color{R: 0.9, G: 1.0, B: 1.0}
-	salmon := la.Color{R: 1.0, G: 0.5, B: 0.5}
-	return &CheckboxSource{width: width, height: height, squareSize: 100, even: lightCyan, odd: salmon}
+func Prepare(canvasPixels int) *Scene {
+	x := NScene(canvasPixels, 10.0, 7.0, NSphere(), Point(0, 0, -5))
+	return x
 }
 
 type CheckboxSource struct {
@@ -30,4 +28,44 @@ func (c *CheckboxSource) GetPixel(x, y int) color.Color {
 	} else {
 		return c.odd
 	}
+}
+
+type Scene struct {
+	wallZ        float64
+	wallSize     float64
+	canvasPixels int
+	shape        Shape
+	rayOrigin    Tuple
+	pixelSize    float64
+	halfWallSize float64
+}
+
+func NScene(canvasPixels int, wallZ float64, wallSize float64, shape Shape, rayOrigin Tuple) *Scene {
+	scene := Scene{
+		canvasPixels: canvasPixels,
+		wallZ:        wallZ,
+		wallSize:     wallSize,
+		shape:        shape,
+		rayOrigin:    rayOrigin,
+		pixelSize:    wallSize / float64(canvasPixels),
+		halfWallSize: wallSize / 2.0,
+	}
+	return &scene
+}
+
+func (s *Scene) GetPixel(x, y int) color.Color {
+	s.shape.calculateInverseTransformation()
+
+	worldX := -s.halfWallSize + s.pixelSize*float64(x)
+	worldY := s.halfWallSize - s.pixelSize*float64(y)
+
+	position := Point(worldX, worldY, s.wallZ)
+	ray, _ := NRay(s.rayOrigin, position.Sub(s.rayOrigin).Normalize())
+	intersects := s.shape.intersect(ray)
+	if len(intersects) == 0 {
+		return LightCyan
+	} else {
+		return Salmon
+	}
+
 }

@@ -1,4 +1,4 @@
-package linearAlgebra
+package engine
 
 import (
 	"fmt"
@@ -12,6 +12,14 @@ func FloatEquals(a, b float64) bool {
 }
 
 type Tuple [4]float64
+
+func (t Tuple) IsPoint() bool {
+	return t[3] == 1
+}
+
+func (t Tuple) IsVector() bool {
+	return t[3] == 0
+}
 
 func (t Tuple) Add(u Tuple) Tuple {
 	return Tuple{t[0] + u[0], t[1] + u[1], t[2] + u[2], t[3] + u[3]}
@@ -57,54 +65,10 @@ func Vector(x, y, z float64) Tuple {
 	return Tuple{x, y, z, 0}
 }
 
-type Color struct {
-	R, G, B float64
-}
-
-func (c Color) Add(u Color) Color {
-	return Color{c.R + u.R, c.G + u.G, c.B + u.B}
-}
-
-func (c Color) Sub(u Color) Color {
-	return Color{c.R - u.R, c.G - u.G, c.B - u.B}
-}
-
-func (c Color) Scale(f float64) Color {
-	return Color{c.R * f, c.G * f, c.B * f}
-}
-
-func (c Color) Multiply(u Color) Color {
-	return Color{c.R * u.R, c.G * u.G, c.B * u.B}
-}
-
-// RGBA Range clips the R, G, B components to be within to [0,1) and converts to uint32
-// This method makes Color implement image.Color
-func (c Color) RGBA() (uint32, uint32, uint32, uint32) {
-	r := uint32(0)
-	if c.R >= 1 {
-		r = 0xffff
-	} else if c.R > 0 {
-		r = uint32(c.R * 0xffff)
-	}
-	g := uint32(0)
-	if c.G >= 1 {
-		g = 0xffff
-	} else if c.G > 0 {
-		g = uint32(c.G * 0xffff)
-	}
-	b := uint32(0)
-	if c.B >= 1 {
-		b = 0xffff
-	} else if c.B > 0 {
-		b = uint32(c.B * 0xffff)
-	}
-	return r, g, b, 0xffff
-}
-
 type Matrix2x2 [2][2]float64
 
 func (m Matrix2x2) Determinant() float64 {
-	return m[0][0]*m[1][1] - m[0][1]*m[1][0]
+	return m[0][0]*m[1][1] - m[1][0]*m[0][1]
 }
 
 type Matrix3x3 [3][3]float64
@@ -123,7 +87,7 @@ func (m Matrix3x3) Submatrix(row, column int) Matrix2x2 {
 				skipColumn = 1
 				continue
 			}
-			result[r-skipRow][c-skipColumn] = m[r][c]
+			result[c-skipColumn][r-skipRow] = m[c][r]
 		}
 	}
 	return result
@@ -145,7 +109,7 @@ func (m Matrix3x3) CoFactor(row, column int) float64 {
 func (m Matrix3x3) Determinant() float64 {
 	result := 0.0
 	for c := 0; c < 3; c++ {
-		result += m[0][c] * m.CoFactor(0, c)
+		result += m[c][0] * m.CoFactor(0, c)
 	}
 	return result
 }
@@ -166,7 +130,7 @@ func (m Matrix4x4) Submatrix(row, column int) Matrix3x3 {
 				skipColumn = 1
 				continue
 			}
-			result[r-skipRow][c-skipColumn] = m[r][c]
+			result[c-skipColumn][r-skipRow] = m[c][r]
 		}
 	}
 	return result
@@ -188,7 +152,7 @@ func (m Matrix4x4) CoFactor(row, column int) float64 {
 func (m Matrix4x4) Determinant() float64 {
 	result := 0.0
 	for c := 0; c < 4; c++ {
-		result += m[0][c] * m.CoFactor(0, c)
+		result += m[c][0] * m.CoFactor(0, c)
 	}
 	return result
 
@@ -201,19 +165,21 @@ var Identity4 = Matrix4x4{
 	{0, 0, 0, 1},
 }
 
-func (m Matrix4x4) Multiply(t Tuple) Tuple {
-	return Tuple{m[0][0]*t[0] + m[0][1]*t[1] + m[0][2]*t[2] + m[0][3]*t[3],
-		m[1][0]*t[0] + m[1][1]*t[1] + m[1][2]*t[2] + m[1][3]*t[3],
-		m[2][0]*t[0] + m[2][1]*t[1] + m[2][2]*t[2] + m[2][3]*t[3],
-		m[3][0]*t[0] + m[3][1]*t[1] + m[3][2]*t[2] + m[3][3]*t[3]}
+func (m Matrix4x4) MulT(t Tuple) Tuple {
+	return Tuple{
+		m[0][0]*t[0] + m[1][0]*t[1] + m[2][0]*t[2] + m[3][0]*t[3],
+		m[0][1]*t[0] + m[1][1]*t[1] + m[2][1]*t[2] + m[3][1]*t[3],
+		m[0][2]*t[0] + m[1][2]*t[1] + m[2][2]*t[2] + m[3][2]*t[3],
+		m[0][3]*t[0] + m[1][3]*t[1] + m[2][3]*t[2] + m[3][3]*t[3],
+	}
 }
 
 func (m Matrix4x4) Transpose() Matrix4x4 {
 	return Matrix4x4{
-		{m[0][0], m[1][0], m[2][0], m[3][0]},
-		{m[0][1], m[1][1], m[2][1], m[3][1]},
-		{m[0][2], m[1][2], m[2][2], m[3][2]},
-		{m[0][3], m[1][3], m[2][3], m[3][3]},
+		{m[0][0], m[0][1], m[0][2], m[0][3]},
+		{m[1][0], m[1][1], m[1][2], m[1][3]},
+		{m[2][0], m[2][1], m[2][2], m[2][3]},
+		{m[3][0], m[3][1], m[3][2], m[3][3]},
 	}
 }
 
@@ -221,7 +187,7 @@ func (m Matrix4x4) Mul(n Matrix4x4) Matrix4x4 {
 	result := Matrix4x4{}
 	for r := 0; r < 4; r++ {
 		for c := 0; c < 4; c++ {
-			result[r][c] = m[r][0]*n[0][c] + m[r][1]*n[1][c] + m[r][2]*n[2][c] + m[r][3]*n[3][c]
+			result[c][r] = m[0][r]*n[c][0] + m[1][r]*n[c][1] + m[2][r]*n[c][2] + m[3][r]*n[c][3]
 		}
 	}
 	return result
@@ -236,7 +202,7 @@ func (m Matrix4x4) Inverse() (Matrix4x4, error) {
 	for r := 0; r < 4; r++ {
 		for c := 0; c < 4; c++ {
 			cf := m.CoFactor(r, c)
-			result[c][r] = cf / det
+			result[r][c] = cf / det
 		}
 	}
 	return result, nil
@@ -245,7 +211,7 @@ func (m Matrix4x4) Inverse() (Matrix4x4, error) {
 func (m Matrix4x4) Eq(n Matrix4x4) bool {
 	for r := 0; r < 4; r++ {
 		for c := 0; c < 4; c++ {
-			if !FloatEquals(m[r][c], n[r][c]) {
+			if !FloatEquals(m[c][r], n[c][r]) {
 				return false
 			}
 		}
@@ -259,7 +225,7 @@ func Translation(x, y, z float64) Matrix4x4 {
 		{0, 1, 0, y},
 		{0, 0, 1, z},
 		{0, 0, 0, 1},
-	}.Transpose()
+	}
 }
 
 func (m Matrix4x4) Translate(x, y, z float64) Matrix4x4 {
@@ -336,6 +302,7 @@ func (m Matrix4x4) RotateY(theta float64) Matrix4x4 {
 func RotationZ(theta float64) Matrix4x4 {
 	c := math.Cos(theta)
 	s := math.Sin(theta)
+
 	return Matrix4x4{
 		{c, -s, 0, 0},
 		{s, c, 0, 0},
@@ -347,3 +314,16 @@ func RotationZ(theta float64) Matrix4x4 {
 func (m Matrix4x4) RotateZ(theta float64) Matrix4x4 {
 	return m.Mul(RotationZ(theta))
 }
+
+//TODO delete these
+//func do(s Shape) {
+//	s.translateX(10)
+//}
+//
+//func Do2() {
+//	sphere := NSphere()
+//	spherec := sphere
+//	spherec.radius = 7
+//	do(&spherec)
+//	fmt.Printf("%v  %v", sphere, spherec)
+//}

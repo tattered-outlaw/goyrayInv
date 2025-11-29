@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	width := 1920
-	height := 1080
+	width := 600
+	height := width
 
-	pixelSource := engine.Prepare(width, height)
+	pixelSource := engine.Prepare(width)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
 	render(width, height, pixelSource, pngWriter)
 	pngWriter.save("image")
