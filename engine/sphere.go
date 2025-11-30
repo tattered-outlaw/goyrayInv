@@ -33,7 +33,7 @@ func (s *Sphere) intersect(ray Ray) []Intersect {
 func (s *Sphere) normalAt(worldPoint Tuple) Tuple {
 	objectPoint := s.getInverseTransformation().MulT(worldPoint)
 	objectNormal := objectPoint.Sub(Point(0, 0, 0))
-	worldNormal := s.getInverseTransformation().Transpose().MulT(objectNormal)
+	worldNormal := s.getTransposeInverse().MulT(objectNormal)
 	worldNormal[3] = 0
 	return worldNormal.Normalize()
 }

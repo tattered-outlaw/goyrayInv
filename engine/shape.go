@@ -3,8 +3,9 @@ package engine
 type Shape interface {
 	intersect(ray Ray) []Intersect
 	normalAt(worldPoint Tuple) Tuple
-	calculateInverseTransformation()
+	calculateInverseTransformations()
 	getInverseTransformation() Matrix4x4
+	getTransposeInverse() Matrix4x4
 	getMaterial() Material
 	setMaterial(Material)
 	translateX(float64)
@@ -16,15 +17,21 @@ type Shape interface {
 type BaseShape struct {
 	transformation        Matrix4x4
 	inverseTransformation Matrix4x4
+	transposeInverse      Matrix4x4
 	material              Material
 }
 
-func (o *BaseShape) calculateInverseTransformation() {
+func (o *BaseShape) calculateInverseTransformations() {
 	inv, _ := o.transformation.Inverse()
 	o.inverseTransformation = inv
+	o.transposeInverse = inv.Transpose()
 }
 
 func (o *BaseShape) getInverseTransformation() Matrix4x4 {
+	return o.inverseTransformation
+}
+
+func (o *BaseShape) getTransposeInverse() Matrix4x4 {
 	return o.inverseTransformation
 }
 

@@ -23,7 +23,7 @@ func Prepare(canvasPixels int) Scene {
 
 	shape = NSphere()
 	shape.setMaterial(DefaultMaterial().
-		withColor(Color{R: 1, G: 1, B: 0.2}))
+		withColor(Color{R: 0.2, G: 1, B: 0.2}))
 	shape.translateX(-1.1)
 	shape.scaleY(1)
 
@@ -55,7 +55,7 @@ type Scene struct {
 
 func NScene(pointLight PointLight, canvasPixels int, wallZ float64, wallSize float64, shapes []Shape, rayOrigin Tuple) Scene {
 	for _, s := range shapes {
-		s.calculateInverseTransformation()
+		s.calculateInverseTransformations()
 	}
 	scene := Scene{
 		pointLight:   pointLight,
