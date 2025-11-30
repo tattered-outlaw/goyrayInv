@@ -13,12 +13,12 @@ import (
 )
 
 func main() {
-	scale := 2
-	width := 1920 * scale
-	height := 1080 * scale
+	scale := 4
+	width := 960 * scale
+	height := 540 * scale
 	fmt.Println("starting rendering...")
 	start := time.Now().UnixMilli()
-	pixelSource := engine.Chapter7(width, height)
+	pixelSource := engine.Chapter8(width, height)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
 	wgCount := 16
 	var wg sync.WaitGroup

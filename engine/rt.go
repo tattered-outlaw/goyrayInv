@@ -40,12 +40,13 @@ type PointLight struct {
 }
 
 type HitRecord struct {
-	T       float64
-	shape   *Shape
-	point   Tuple
-	eyeV    Tuple
-	normalV Tuple
-	inside  bool
+	T         float64
+	shape     *Shape
+	point     Tuple
+	overPoint Tuple
+	eyeV      Tuple
+	normalV   Tuple
+	inside    bool
 }
 
 func colorAt(shapes []*Shape, lights []PointLight, ray Ray) Color {
@@ -53,11 +54,25 @@ func colorAt(shapes []*Shape, lights []PointLight, ray Ray) Color {
 	if len(intersects) == 0 {
 		return Black
 	} else {
-		hit := intersects[0]
-		hitRecord := createHitRecord(hit, ray)
-		return shadeHit(lights, hitRecord)
+		hitIndex := hitIndex(intersects)
+		if hitIndex == -1 {
+			return Black
+		} else {
+			hit := intersects[hitIndex]
+			hitRecord := createHitRecord(hit, ray)
+			return shadeHit(lights, shapes, hitRecord)
+		}
 	}
 
+}
+
+func hitIndex(intersects []Intersect) int {
+	for i, intersect := range intersects {
+		if intersect.T > 0 {
+			return i
+		}
+	}
+	return -1
 }
 
 func intersectShapes(shapes []*Shape, worldRay Ray) []Intersect {
@@ -80,32 +95,35 @@ func createHitRecord(intersect Intersect, ray Ray) HitRecord {
 		inside = true
 		normalV = normalV.Negate()
 	}
+	overPoint := point.Add(normalV.Scale(EPSILON))
 	return HitRecord{
-		T:       intersect.T,
-		shape:   intersect.Shape,
-		point:   point,
-		eyeV:    eyeV,
-		normalV: normalV,
-		inside:  inside,
+		T:         intersect.T,
+		shape:     intersect.Shape,
+		point:     point,
+		overPoint: overPoint,
+		eyeV:      eyeV,
+		normalV:   normalV,
+		inside:    inside,
 	}
 }
 
-func shadeHit(lights []PointLight, record HitRecord) Color {
+func shadeHit(lights []PointLight, shapes []*Shape, record HitRecord) Color {
 	total := Black
 	for _, light := range lights {
-		total = total.Add(lighting(record.shape.getMaterial(), light, record.point, record.eyeV, record.normalV))
+		shadowed := isShadowed(light, shapes, record.overPoint)
+		total = total.Add(lighting(record.shape.getMaterial(), light, record.point, record.eyeV, record.normalV, shadowed))
 	}
 	return total
 }
 
-func lighting(material Material, light PointLight, point Tuple, eyeV Tuple, normalV Tuple) Color {
+func lighting(material Material, light PointLight, point Tuple, eyeV Tuple, normalV Tuple, shadowed bool) Color {
 	effectiveColor := material.Color.Multiply(light.Intensity)
 	lightV := light.Position.Sub(point).Normalize()
 	ambient := effectiveColor.Scale(material.Ambient)
 	lightDotNormal := lightV.Dot(normalV)
 	diffuse := Black
 	specular := Black
-	if lightDotNormal >= 0 {
+	if !shadowed && lightDotNormal >= 0 {
 		diffuse = effectiveColor.Scale(material.Diffuse * lightDotNormal)
 		reflectV := reflect(lightV.Scale(-1), normalV)
 		reflectDotEye := reflectV.Dot(eyeV)
@@ -118,4 +136,13 @@ func lighting(material Material, light PointLight, point Tuple, eyeV Tuple, norm
 
 func reflect(in Tuple, normal Tuple) Tuple {
 	return in.Sub(normal.Scale(2 * in.Dot(normal)))
+}
+
+func isShadowed(light PointLight, shapes []*Shape, point Tuple) bool {
+	v := light.Position.Sub(point)
+	distance := v.Magnitude()
+	direction := v.Normalize()
+	ray := Ray{point, direction}
+	intersections := intersectShapes(shapes, ray)
+	return hitIndex(intersections) >= 0 && intersections[0].T < distance
 }
