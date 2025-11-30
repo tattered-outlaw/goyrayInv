@@ -16,7 +16,7 @@ func Prepare(canvasPixels int) Scene {
 	shape := NSphere()
 	shape.setMaterial(DefaultMaterial().
 		withColor(Color{R: 1, G: 0.2, B: 1}))
-	shape.translateX(1)
+	shape.translateX(1.1)
 	shape.scaleY(1)
 
 	shapes = append(shapes, shape)

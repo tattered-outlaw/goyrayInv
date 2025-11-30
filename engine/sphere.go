@@ -1,17 +1,15 @@
 package engine
 
-import "math"
+import (
+	"math"
+)
 
 type Sphere struct {
-	BaseShape
+	*BaseShape
 }
 
 func NSphere() *Sphere {
-	return &Sphere{BaseShape{
-		transformation:        Identity4,
-		inverseTransformation: Identity4,
-		material:              DefaultMaterial(),
-	}}
+	return &Sphere{DefaultBaseshape()}
 }
 
 func (s *Sphere) intersect(ray Ray) []Intersect {

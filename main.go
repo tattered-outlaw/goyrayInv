@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+	"sync"
 	"time"
 
 	"goray/engine"
@@ -18,7 +19,13 @@ func main() {
 	start := time.Now().UnixMilli()
 	pixelSource := engine.Prepare(width)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
-	render(width, height, pixelSource, pngWriter)
+	wgCount := 128
+	var wg sync.WaitGroup
+	wg.Add(wgCount)
+	for i := 0; i < wgCount; i++ {
+		go render(width, height, pixelSource, pngWriter, i, wgCount, &wg)
+	}
+	wg.Wait()
 	fmt.Printf("rendering done in %d ms\n", time.Now().UnixMilli()-start)
 	pngWriter.save("image")
 }
@@ -31,8 +38,9 @@ type PixelDestination interface {
 	setPixel(x, y int, c color.Color)
 }
 
-func render(width, height int, source PixelSource, destination PixelDestination) {
-	for x := 0; x < width; x++ {
+func render(width, height int, source PixelSource, destination PixelDestination, grn, grOf int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for x := grn; x < width; x += grOf {
 		for y := 0; y < height; y++ {
 			destination.setPixel(x, y, source.GetPixel(x, y))
 		}

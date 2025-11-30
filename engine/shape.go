@@ -21,6 +21,15 @@ type BaseShape struct {
 	material              Material
 }
 
+func DefaultBaseshape() *BaseShape {
+	return &BaseShape{
+		transformation:        Identity4,
+		inverseTransformation: Identity4,
+		transposeInverse:      Identity4,
+		material:              DefaultMaterial(),
+	}
+}
+
 func (o *BaseShape) calculateInverseTransformations() {
 	inv, _ := o.transformation.Inverse()
 	o.inverseTransformation = inv
