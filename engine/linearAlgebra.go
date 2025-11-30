@@ -187,7 +187,7 @@ func (m Matrix4x4) Mul(n Matrix4x4) Matrix4x4 {
 	result := Matrix4x4{}
 	for r := 0; r < 4; r++ {
 		for c := 0; c < 4; c++ {
-			result[c][r] = m[0][r]*n[c][0] + m[1][r]*n[c][1] + m[2][r]*n[c][2] + m[3][r]*n[c][3]
+			result[r][c] = m[r][0]*n[0][c] + m[r][1]*n[1][c] + m[r][2]*n[2][c] + m[r][3]*n[3][c]
 		}
 	}
 	return result
@@ -229,7 +229,7 @@ func Translation(x, y, z float64) Matrix4x4 {
 }
 
 func (m Matrix4x4) Translate(x, y, z float64) Matrix4x4 {
-	return m.Mul(Translation(x, y, z))
+	return Translation(x, y, z).Mul(m)
 }
 
 func (m Matrix4x4) TranslateX(x float64) Matrix4x4 {
@@ -244,32 +244,26 @@ func (m Matrix4x4) TranslateZ(z float64) Matrix4x4 {
 	return m.Translate(0, 0, z)
 }
 
-func Scaling(x, y, z float64) Matrix4x4 {
+func (m Matrix4x4) Scale(x, y, z float64) Matrix4x4 {
 	return Matrix4x4{
 		{x, 0, 0, 0},
 		{0, y, 0, 0},
 		{0, 0, z, 0},
 		{0, 0, 0, 1},
-	}
-}
-
-func (m Matrix4x4) Scale(x, y, z float64) Matrix4x4 {
-	return m.Mul(Scaling(x, y, z))
+	}.Mul(m)
 }
 
 func (m Matrix4x4) ScaleX(x float64) Matrix4x4 {
 	return m.Scale(x, 1, 1)
 }
 
-func (m Matrix4x4) ScaleY(y float64) Matrix4x4 {
-	return m.Scale(1, y, 1)
-}
+func (m Matrix4x4) ScaleY(y float64) Matrix4x4 { return m.Scale(1, y, 1) }
 
 func (m Matrix4x4) ScaleZ(z float64) Matrix4x4 {
 	return m.Scale(1, 1, z)
 }
 
-func RotationX(theta float64) Matrix4x4 {
+func (m Matrix4x4) RotateX(theta float64) Matrix4x4 {
 	c := math.Cos(theta)
 	s := math.Sin(theta)
 	return Matrix4x4{
@@ -277,14 +271,10 @@ func RotationX(theta float64) Matrix4x4 {
 		{0, c, -s, 0},
 		{0, s, c, 0},
 		{0, 0, 0, 1},
-	}
+	}.Mul(m)
 }
 
-func (m Matrix4x4) RotateX(theta float64) Matrix4x4 {
-	return m.Mul(RotationX(theta))
-}
-
-func RotationY(theta float64) Matrix4x4 {
+func (m Matrix4x4) RotateY(theta float64) Matrix4x4 {
 	c := math.Cos(theta)
 	s := math.Sin(theta)
 	return Matrix4x4{
@@ -292,25 +282,16 @@ func RotationY(theta float64) Matrix4x4 {
 		{0, 1, 0, 0},
 		{-s, 0, c, 0},
 		{0, 0, 0, 1},
-	}
+	}.Mul(m)
 }
 
-func (m Matrix4x4) RotateY(theta float64) Matrix4x4 {
-	return m.Mul(RotationY(theta))
-}
-
-func RotationZ(theta float64) Matrix4x4 {
+func (m Matrix4x4) RotateZ(theta float64) Matrix4x4 {
 	c := math.Cos(theta)
 	s := math.Sin(theta)
-
 	return Matrix4x4{
 		{c, -s, 0, 0},
 		{s, c, 0, 0},
 		{0, 0, 1, 0},
 		{0, 0, 0, 1},
-	}
-}
-
-func (m Matrix4x4) RotateZ(theta float64) Matrix4x4 {
-	return m.Mul(RotationZ(theta))
+	}.Mul(m)
 }

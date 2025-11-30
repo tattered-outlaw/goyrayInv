@@ -1,69 +1,97 @@
 package engine
 
-type Shape interface {
-	intersect(ray Ray) []Intersect
-	normalAt(worldPoint Tuple) Tuple
-	calculateInverseTransformations()
-	getInverseTransformation() Matrix4x4
-	getTransposeInverse() Matrix4x4
-	getMaterial() Material
-	setMaterial(Material)
-	translateX(float64)
-	translateY(float64)
-	translateZ(float64)
-	scaleY(float64)
+type ShapeStrategy interface {
+	localIntersect(shape Shape, localRay Ray) []Intersect
+	localNormalAt(shape Shape, worldPoint Tuple) Tuple
 }
 
-type BaseShape struct {
+type Shape struct {
 	transformation        Matrix4x4
 	inverseTransformation Matrix4x4
 	transposeInverse      Matrix4x4
 	material              Material
+	strategy              ShapeStrategy
 }
 
-func DefaultBaseshape() *BaseShape {
-	return &BaseShape{
+func NShape(strategy ShapeStrategy) Shape {
+	return Shape{
 		transformation:        Identity4,
 		inverseTransformation: Identity4,
 		transposeInverse:      Identity4,
 		material:              DefaultMaterial(),
+		strategy:              strategy,
 	}
 }
 
-func (o *BaseShape) calculateInverseTransformations() {
+func (o *Shape) intersect(worldRay Ray) []Intersect {
+	return o.strategy.localIntersect(*o, worldRay.TransformToShape(*o))
+}
+
+func (o *Shape) normalAt(worldPoint Tuple) Tuple {
+	localNormal := o.strategy.localNormalAt(*o, o.getInverseTransformation().MulT(worldPoint))
+	worldNormal := o.getTransposeInverse().MulT(localNormal)
+	worldNormal[3] = 0
+	return worldNormal.Normalize()
+}
+
+func (o *Shape) calculateInverseTransformations() {
 	inv, _ := o.transformation.Inverse()
 	o.inverseTransformation = inv
 	o.transposeInverse = inv.Transpose()
 }
 
-func (o *BaseShape) getInverseTransformation() Matrix4x4 {
+func (o *Shape) getInverseTransformation() Matrix4x4 {
 	return o.inverseTransformation
 }
 
-func (o *BaseShape) getTransposeInverse() Matrix4x4 {
-	return o.inverseTransformation
+func (o *Shape) getTransposeInverse() Matrix4x4 {
+	return o.transposeInverse
 }
 
-func (o *BaseShape) getMaterial() Material {
+func (o *Shape) getMaterial() Material {
 	return o.material
 }
 
-func (o *BaseShape) setMaterial(m Material) {
+func (o *Shape) setMaterial(m Material) {
 	o.material = m
 }
 
-func (o *BaseShape) translateX(x float64) {
+func (o *Shape) translate(x, y, z float64) {
+	o.transformation = o.transformation.Translate(x, y, z)
+}
+
+func (o *Shape) translateX(x float64) {
 	o.transformation = o.transformation.TranslateX(x)
 }
 
-func (o *BaseShape) translateY(y float64) {
+func (o *Shape) translateY(y float64) {
 	o.transformation = o.transformation.TranslateY(y)
 }
 
-func (o *BaseShape) translateZ(z float64) {
+func (o *Shape) translateZ(z float64) {
 	o.transformation = o.transformation.TranslateZ(z)
 }
 
-func (o *BaseShape) scaleY(y float64) {
+func (o *Shape) scale(x, y, z float64) {
+	o.transformation = o.transformation.Scale(x, y, z)
+}
+
+func (o *Shape) scaleX(x float64) {
+	o.transformation = o.transformation.ScaleX(x)
+}
+func (o *Shape) scaleY(y float64) {
 	o.transformation = o.transformation.ScaleY(y)
+}
+func (o *Shape) scaleZ(z float64) {
+	o.transformation = o.transformation.ScaleZ(z)
+}
+
+func (o *Shape) rotateX(x float64) {
+	o.transformation = o.transformation.RotateX(x)
+}
+func (o *Shape) rotateY(y float64) {
+	o.transformation = o.transformation.RotateY(y)
+}
+func (o *Shape) rotateZ(z float64) {
+	o.transformation = o.transformation.RotateZ(z)
 }

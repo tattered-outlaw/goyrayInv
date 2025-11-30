@@ -13,13 +13,14 @@ import (
 )
 
 func main() {
-	width := 1000
-	height := width
+	scale := 2
+	width := 1920 * scale
+	height := 1080 * scale
 	fmt.Println("starting rendering...")
 	start := time.Now().UnixMilli()
-	pixelSource := engine.Prepare(width)
+	pixelSource := engine.Chapter7(width, height)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
-	wgCount := 128
+	wgCount := 16
 	var wg sync.WaitGroup
 	wg.Add(wgCount)
 	for i := 0; i < wgCount; i++ {
@@ -39,10 +40,19 @@ type PixelDestination interface {
 }
 
 func render(width, height int, source PixelSource, destination PixelDestination, grn, grOf int, wg *sync.WaitGroup) {
+	debug := false
+	debugX := 0 // width / 2
+	debugY := 0 // height / 2
 	defer wg.Done()
 	for x := grn; x < width; x += grOf {
 		for y := 0; y < height; y++ {
-			destination.setPixel(x, y, source.GetPixel(x, y))
+			if x == debugX && y == debugY {
+				destination.setPixel(x, y, source.GetPixel(x, y))
+			} else {
+				if !debug {
+					destination.setPixel(x, y, source.GetPixel(x, y))
+				}
+			}
 		}
 	}
 }

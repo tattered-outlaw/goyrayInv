@@ -26,5 +26,5 @@ func (m Material) withShininess(s float64) Material {
 }
 
 func DefaultMaterial() Material {
-	return Material{Color: Color{1, 1, 1}, Ambient: 0.1, Diffuse: 0.9, Specular: 0.9, Shininess: 200.0}
+	return Material{Color: Color{1, 1, 1}, Ambient: 0.15, Diffuse: 0.9, Specular: 0.9, Shininess: 200.0}
 }

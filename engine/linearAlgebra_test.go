@@ -38,6 +38,32 @@ func TestMatrix4x4_Determinant_zero(t *testing.T) {
 	}
 }
 
+func TestMatrix4x4_Mul(t *testing.T) {
+	a := Matrix4x4{
+		{1, 2, 3, 4},
+		{5, 6, 7, 8},
+		{9, 8, 7, 6},
+		{5, 4, 3, 2},
+	}
+	b := Matrix4x4{
+		{-2, 1, 2, 3},
+		{3, 2, 1, -1},
+		{4, 3, 6, 5},
+		{1, 2, 7, 8},
+	}
+	t.Logf("%v", a.Mul(b))
+}
+
+func TestMatrix4x4_Transpose(t *testing.T) {
+	a := Matrix4x4{
+		{1, 2, 3, 4},
+		{5, 6, 7, 8},
+		{9, 8, 7, 6},
+		{5, 4, 3, 2},
+	}
+	t.Logf("%v", a.Transpose())
+}
+
 func TestMatrix4x4_Inverse(t *testing.T) {
 	m := Matrix4x4{
 		{8, -5, 9, 2},
@@ -57,6 +83,6 @@ func TestMatrix4x4_Inverse(t *testing.T) {
 	}
 	if !inv.Eq(e) {
 		t.Fail()
-		t.Logf("%v", inv.Transpose())
+		t.Logf("%v", inv)
 	}
 }

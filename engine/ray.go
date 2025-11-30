@@ -12,13 +12,13 @@ func NRay(origin, direction Tuple) Ray {
 	return result
 }
 
-func (r *Ray) Position(t float64) Tuple {
-	return r.Origin.Add(r.Direction.Scale(t))
+func (ray Ray) Position(t float64) Tuple {
+	return ray.Origin.Add(ray.Direction.Scale(t))
 }
 
-func (r *Ray) TransformToShape(s Shape) {
+func (ray Ray) TransformToShape(s Shape) Ray {
 	t := s.getInverseTransformation()
-	newRay := NRay(t.MulT(r.Origin), t.MulT(r.Direction))
-	r.Origin = newRay.Origin
-	r.Direction = newRay.Direction
+	ray.Origin = t.MulT(ray.Origin)
+	ray.Direction = t.MulT(ray.Direction)
+	return ray
 }
