@@ -54,5 +54,5 @@ func (camera Camera) rayForPixel(x, y int) Ray {
 	pixel := camera.transform.MulT(Point(worldX, worldY, -1))
 	origin := camera.transform.MulT(Point(0, 0, 0))
 	direction := pixel.Sub(origin).Normalize()
-	return NRay(origin, direction)
+	return NRay(&origin, &direction)
 }

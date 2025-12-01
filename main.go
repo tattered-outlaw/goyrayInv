@@ -21,7 +21,7 @@ func main() {
 	start := time.Now().UnixMilli()
 	pixelSource := f(width, height)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
-	wgCount := 1
+	wgCount := 16
 	var wg sync.WaitGroup
 	wg.Add(wgCount)
 	for i := 0; i < wgCount; i++ {

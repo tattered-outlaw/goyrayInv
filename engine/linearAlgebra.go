@@ -173,6 +173,12 @@ func (m Matrix4x4) MulT(t Tuple) Tuple {
 	return result
 }
 
+func MulTInPlace(m *Matrix4x4, t *Tuple, result *Tuple) {
+	for r := 0; r < 4; r++ {
+		result[r] = m[r][0]*t[0] + m[r][1]*t[1] + m[r][2]*t[2] + m[r][3]*t[3]
+	}
+}
+
 func (m Matrix4x4) Transpose() Matrix4x4 {
 	result := Matrix4x4{}
 	for r := 0; r < 4; r++ {

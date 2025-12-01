@@ -1,52 +1,53 @@
 package engine
 
+import "sync"
+
 type ShapeStrategy interface {
-	localIntersect(shape Shape, localRay Ray) []Intersect
-	localNormalAt(shape Shape, worldPoint Tuple) Tuple
+	localIntersect(shape *Shape, localRay *Ray, intersections *Intersections)
+	localNormalAt(shape *Shape, worldPoint *Tuple) Tuple
 }
 
 type Shape struct {
 	transformation        Matrix4x4
-	inverseTransformation Matrix4x4
-	transposeInverse      Matrix4x4
+	InverseTransformation *Matrix4x4
+	TransposeInverse      *Matrix4x4
 	material              Material
 	strategy              ShapeStrategy
 }
 
-func NShape(strategy ShapeStrategy) Shape {
-	return Shape{
+func NShape(strategy ShapeStrategy) *Shape {
+	return &Shape{
 		transformation:        Identity4,
-		inverseTransformation: Identity4,
-		transposeInverse:      Identity4,
+		InverseTransformation: &Identity4,
+		TransposeInverse:      &Identity4,
 		material:              DefaultMaterial(),
 		strategy:              strategy,
 	}
 }
 
-func (shape Shape) intersect(worldRay Ray) []Intersect {
-	return shape.strategy.localIntersect(shape, worldRay.TransformToShape(shape))
+func intersectShape(shape *Shape, worldRay *Ray, intersections *Intersections, rayPool *sync.Pool) {
+	localRay := rayPool.Get().(*Ray)
+	defer rayPool.Put(localRay)
+	worldRay.TransformToShape(shape, localRay)
+	shape.strategy.localIntersect(shape, localRay, intersections)
 }
 
-func (shape Shape) normalAt(worldPoint Tuple) Tuple {
-	localNormal := shape.strategy.localNormalAt(shape, shape.getInverseTransformation().MulT(worldPoint))
-	worldNormal := shape.getTransposeInverse().MulT(localNormal)
+func (shape Shape) normalAt(worldPoint *Tuple, tuplePool *sync.Pool) Tuple {
+	localPoint := tuplePool.Get().(*Tuple)
+	defer tuplePool.Put(localPoint)
+	MulTInPlace(shape.InverseTransformation, worldPoint, localPoint)
+	localNormal := shape.strategy.localNormalAt(&shape, localPoint)
+	worldNormal := shape.TransposeInverse.MulT(localNormal)
 	worldNormal[3] = 0
 	return worldNormal.Normalize()
 }
 
 func (shape Shape) calculateInverseTransformations() Shape {
 	inv, _ := shape.transformation.Inverse()
-	shape.inverseTransformation = inv
-	shape.transposeInverse = inv.Transpose()
+	shape.InverseTransformation = &inv
+	transInverse := inv.Transpose()
+	shape.TransposeInverse = &transInverse
 	return shape
-}
-
-func (shape Shape) getInverseTransformation() Matrix4x4 {
-	return shape.inverseTransformation
-}
-
-func (shape Shape) getTransposeInverse() Matrix4x4 {
-	return shape.transposeInverse
 }
 
 func (shape Shape) getMaterial() Material {

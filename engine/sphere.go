@@ -6,21 +6,20 @@ import (
 
 type Sphere struct{}
 
-func (Sphere) localIntersect(shape Shape, localRay Ray) []Intersect {
+func (Sphere) localIntersect(shape *Shape, localRay *Ray, intersections *Intersections) {
 	sphereToRay := localRay.Origin.Sub(Point(0, 0, 0))
-	a := localRay.Direction.Dot(localRay.Direction)
+	a := localRay.Direction.Dot(*localRay.Direction)
 	b := 2 * localRay.Direction.Dot(sphereToRay)
 	c := sphereToRay.Dot(sphereToRay) - 1
 	discriminant := b*b - 4*a*c
-	if discriminant < 0 {
-		return nil
-	} else {
+	if discriminant >= 0 {
 		t1 := (-b - math.Sqrt(discriminant)) / (2 * a)
 		t2 := (-b + math.Sqrt(discriminant)) / (2 * a)
-		return []Intersect{{T: t1, Shape: &shape}, {T: t2, Shape: &shape}}
+		intersections.Add(t1, shape)
+		intersections.Add(t2, shape)
 	}
 }
 
-func (Sphere) localNormalAt(_ Shape, localPoint Tuple) Tuple {
+func (Sphere) localNormalAt(_ *Shape, localPoint *Tuple) Tuple {
 	return localPoint.Sub(Point(0, 0, 0))
 }
