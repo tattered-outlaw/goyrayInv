@@ -17,30 +17,30 @@ type Engine struct {
 }
 
 type Ray struct {
-	Origin    *Tuple
-	Direction *Tuple
+	origin    *Tuple
+	direction *Tuple
 }
 
 func NRay(origin, direction *Tuple) Ray {
 	result := Ray{}
-	result.Origin = origin
-	result.Direction = direction
+	result.origin = origin
+	result.direction = direction
 	return result
 }
 
 func (ray *Ray) Position(t float64) Tuple {
-	return ray.Origin.Add(ray.Direction.Scale(t))
+	return ray.origin.Add(ray.direction.Scale(t))
 }
 
 func (ray *Ray) TransformToShape(s *Shape, localRayBuffer *Ray) {
 	t := s.InverseTransformation
-	MulTInPlace(t, ray.Origin, localRayBuffer.Origin)
-	MulTInPlace(t, ray.Direction, localRayBuffer.Direction)
+	MulTInPlace(t, ray.origin, localRayBuffer.origin)
+	MulTInPlace(t, ray.direction, localRayBuffer.direction)
 }
 
 type Intersection struct {
-	T     float64
-	Shape *Shape
+	t     float64
+	shape *Shape
 }
 
 type Intersections struct {
@@ -52,8 +52,8 @@ func (i *Intersections) Add(t float64, shape *Shape) {
 	if i.writeIndex == maxIntersections {
 		panic("too many intersections - consider increasing maxIntersections or changing bounding strategy")
 	}
-	i.array[i.writeIndex].T = t
-	i.array[i.writeIndex].Shape = shape
+	i.array[i.writeIndex].t = t
+	i.array[i.writeIndex].shape = shape
 	i.writeIndex++
 }
 
@@ -63,7 +63,7 @@ func (i *Intersections) Return(pool *sync.Pool) {
 }
 
 type HitRecord struct {
-	T         float64
+	t         float64
 	shape     *Shape
 	point     Tuple
 	overPoint Tuple
@@ -132,7 +132,7 @@ func intersectShapes(engine *Engine, worldRay *Ray, intersections *Intersections
 	}
 	intersectionsSlice := intersections.array[:intersections.writeIndex]
 	sort.Slice(intersectionsSlice, func(i, j int) bool {
-		return intersectionsSlice[i].T < intersectionsSlice[j].T
+		return intersectionsSlice[i].t < intersectionsSlice[j].t
 	})
 }
 
@@ -173,7 +173,7 @@ func lighting(material Material, light PointLight, point Tuple, eyeV Tuple, norm
 
 func getHitIndex(intersectionsSlice []Intersection) int {
 	for i, intersect := range intersectionsSlice {
-		if intersect.T > 0 {
+		if intersect.t > 0 {
 			return i
 		}
 	}
@@ -182,9 +182,9 @@ func getHitIndex(intersectionsSlice []Intersection) int {
 
 func createHitRecord(engine *Engine, intersect *Intersection, ray *Ray) HitRecord {
 	tuplePool := engine.tuplePool
-	point := ray.Position(intersect.T)
-	normalV := normalAt(intersect.Shape, &point, tuplePool)
-	eyeV := ray.Direction.Negate()
+	point := ray.Position(intersect.t)
+	normalV := normalAt(intersect.shape, &point, tuplePool)
+	eyeV := ray.direction.Negate()
 	inside := false
 	if normalV.Dot(eyeV) < 0 {
 		inside = true
@@ -192,8 +192,8 @@ func createHitRecord(engine *Engine, intersect *Intersection, ray *Ray) HitRecor
 	}
 	overPoint := point.Add(normalV.Scale(EPSILON))
 	return HitRecord{
-		T:         intersect.T,
-		shape:     intersect.Shape,
+		t:         intersect.t,
+		shape:     intersect.shape,
 		point:     point,
 		overPoint: overPoint,
 		eyeV:      eyeV,
@@ -224,13 +224,13 @@ func isInShadow(engine *Engine, light PointLight, point Tuple) bool {
 	direction := v.Normalize()
 	ray := engine.rayPool.Get().(*Ray)
 	defer engine.rayPool.Put(ray)
-	ray.Origin = &point
-	ray.Direction = &direction
+	ray.origin = &point
+	ray.direction = &direction
 	intersections := engine.intersectionsPool.Get().(*Intersections)
 	defer intersections.Return(engine.intersectionsPool)
 
 	intersectShapes(engine, ray, intersections)
 	intersectionsSlice := intersections.array[:intersections.writeIndex]
 
-	return getHitIndex(intersectionsSlice) >= 0 && intersectionsSlice[0].T < distance
+	return getHitIndex(intersectionsSlice) >= 0 && intersectionsSlice[0].t < distance
 }

@@ -7,9 +7,9 @@ import (
 type Sphere struct{}
 
 func (Sphere) localIntersect(shape *Shape, localRay *Ray, intersections *Intersections) {
-	sphereToRay := localRay.Origin.Sub(Point(0, 0, 0))
-	a := localRay.Direction.Dot(*localRay.Direction)
-	b := 2 * localRay.Direction.Dot(sphereToRay)
+	sphereToRay := localRay.origin.Sub(Point(0, 0, 0))
+	a := localRay.direction.Dot(*localRay.direction)
+	b := 2 * localRay.direction.Dot(sphereToRay)
 	c := sphereToRay.Dot(sphereToRay) - 1
 	discriminant := b*b - 4*a*c
 	if discriminant >= 0 {
