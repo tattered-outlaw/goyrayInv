@@ -4,11 +4,6 @@ import (
 	"math"
 )
 
-func NSphere() *Shape {
-	result := NShape(Sphere{})
-	return &result
-}
-
 type Sphere struct{}
 
 func (Sphere) localIntersect(shape Shape, localRay Ray) []Intersect {

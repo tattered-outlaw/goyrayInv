@@ -12,19 +12,21 @@ type Scene struct {
 	shapes      []*Shape
 }
 
-func NScene(pointLights []PointLight, camera Camera, shapes []*Shape) Scene {
-	for _, s := range shapes {
-		s.calculateInverseTransformations()
-	}
+func NScene(pointLights []PointLight, camera Camera) *Scene {
 	scene := Scene{
 		pointLights: pointLights,
 		camera:      camera,
-		shapes:      shapes,
+		shapes:      make([]*Shape, 0),
 	}
-	return scene
+	return &scene
 }
 
-func (scene Scene) GetPixel(x, y int) color.Color {
+func (scene *Scene) AddShape(shape Shape) {
+	shape = shape.calculateInverseTransformations()
+	scene.shapes = append(scene.shapes, &shape)
+}
+
+func (scene *Scene) GetPixel(x, y int) color.Color {
 	ray := scene.camera.rayForPixel(x, y)
 	return colorAt(scene.shapes, scene.pointLights, ray)
 }

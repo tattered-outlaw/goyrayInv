@@ -23,75 +23,89 @@ func NShape(strategy ShapeStrategy) Shape {
 	}
 }
 
-func (o *Shape) intersect(worldRay Ray) []Intersect {
-	return o.strategy.localIntersect(*o, worldRay.TransformToShape(*o))
+func (shape Shape) intersect(worldRay Ray) []Intersect {
+	return shape.strategy.localIntersect(shape, worldRay.TransformToShape(shape))
 }
 
-func (o *Shape) normalAt(worldPoint Tuple) Tuple {
-	localNormal := o.strategy.localNormalAt(*o, o.getInverseTransformation().MulT(worldPoint))
-	worldNormal := o.getTransposeInverse().MulT(localNormal)
+func (shape Shape) normalAt(worldPoint Tuple) Tuple {
+	localNormal := shape.strategy.localNormalAt(shape, shape.getInverseTransformation().MulT(worldPoint))
+	worldNormal := shape.getTransposeInverse().MulT(localNormal)
 	worldNormal[3] = 0
 	return worldNormal.Normalize()
 }
 
-func (o *Shape) calculateInverseTransformations() {
-	inv, _ := o.transformation.Inverse()
-	o.inverseTransformation = inv
-	o.transposeInverse = inv.Transpose()
+func (shape Shape) calculateInverseTransformations() Shape {
+	inv, _ := shape.transformation.Inverse()
+	shape.inverseTransformation = inv
+	shape.transposeInverse = inv.Transpose()
+	return shape
 }
 
-func (o *Shape) getInverseTransformation() Matrix4x4 {
-	return o.inverseTransformation
+func (shape Shape) getInverseTransformation() Matrix4x4 {
+	return shape.inverseTransformation
 }
 
-func (o *Shape) getTransposeInverse() Matrix4x4 {
-	return o.transposeInverse
+func (shape Shape) getTransposeInverse() Matrix4x4 {
+	return shape.transposeInverse
 }
 
-func (o *Shape) getMaterial() Material {
-	return o.material
+func (shape Shape) getMaterial() Material {
+	return shape.material
 }
 
-func (o *Shape) setMaterial(m Material) {
-	o.material = m
+func (shape Shape) withMaterial(m Material) Shape {
+	shape.material = m
+	return shape
 }
 
-func (o *Shape) translate(x, y, z float64) {
-	o.transformation = o.transformation.Translate(x, y, z)
+func (shape Shape) translate(x, y, z float64) Shape {
+	shape.transformation = shape.transformation.Translate(x, y, z)
+	return shape
 }
 
-func (o *Shape) translateX(x float64) {
-	o.transformation = o.transformation.TranslateX(x)
+func (shape Shape) translateX(x float64) Shape {
+	shape.transformation = shape.transformation.TranslateX(x)
+	return shape
 }
 
-func (o *Shape) translateY(y float64) {
-	o.transformation = o.transformation.TranslateY(y)
+func (shape Shape) translateY(y float64) Shape {
+	shape.transformation = shape.transformation.TranslateY(y)
+	return shape
 }
 
-func (o *Shape) translateZ(z float64) {
-	o.transformation = o.transformation.TranslateZ(z)
+func (shape Shape) translateZ(z float64) Shape {
+	shape.transformation = shape.transformation.TranslateZ(z)
+	return shape
 }
 
-func (o *Shape) scale(x, y, z float64) {
-	o.transformation = o.transformation.Scale(x, y, z)
+func (shape Shape) scale(x, y, z float64) Shape {
+	shape.transformation = shape.transformation.Scale(x, y, z)
+	return shape
 }
 
-func (o *Shape) scaleX(x float64) {
-	o.transformation = o.transformation.ScaleX(x)
+func (shape Shape) scaleX(x float64) Shape {
+	shape.transformation = shape.transformation.ScaleX(x)
+	return shape
 }
-func (o *Shape) scaleY(y float64) {
-	o.transformation = o.transformation.ScaleY(y)
+func (shape Shape) scaleY(y float64) Shape {
+	shape.transformation = shape.transformation.ScaleY(y)
+	return shape
 }
-func (o *Shape) scaleZ(z float64) {
-	o.transformation = o.transformation.ScaleZ(z)
+func (shape Shape) scaleZ(z float64) Shape {
+	shape.transformation = shape.transformation.ScaleZ(z)
+	return shape
 }
 
-func (o *Shape) rotateX(x float64) {
-	o.transformation = o.transformation.RotateX(x)
+func (shape Shape) rotateX(x float64) Shape {
+	shape.transformation = shape.transformation.RotateX(x)
+	return shape
 }
-func (o *Shape) rotateY(y float64) {
-	o.transformation = o.transformation.RotateY(y)
+
+func (shape Shape) rotateY(y float64) Shape {
+	shape.transformation = shape.transformation.RotateY(y)
+	return shape
 }
-func (o *Shape) rotateZ(z float64) {
-	o.transformation = o.transformation.RotateZ(z)
+func (shape Shape) rotateZ(z float64) Shape {
+	shape.transformation = shape.transformation.RotateZ(z)
+	return shape
 }

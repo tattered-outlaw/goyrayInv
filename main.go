@@ -13,14 +13,15 @@ import (
 )
 
 func main() {
+	f := engine.BallScene
 	scale := 4
 	width := 960 * scale
 	height := 540 * scale
 	fmt.Println("starting rendering...")
 	start := time.Now().UnixMilli()
-	pixelSource := engine.Chapter8(width, height)
+	pixelSource := f(width, height)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
-	wgCount := 16
+	wgCount := 1
 	var wg sync.WaitGroup
 	wg.Add(wgCount)
 	for i := 0; i < wgCount; i++ {
