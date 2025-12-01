@@ -1,4 +1,4 @@
-package engine
+package rt
 
 type Material struct {
 	Color                                 Color

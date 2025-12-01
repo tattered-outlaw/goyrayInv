@@ -1,6 +1,4 @@
-package engine
-
-import "sync"
+package rt
 
 type ShapeStrategy interface {
 	localIntersect(shape *Shape, localRay *Ray, intersections *Intersections)
@@ -23,23 +21,6 @@ func NShape(strategy ShapeStrategy) *Shape {
 		material:              DefaultMaterial(),
 		strategy:              strategy,
 	}
-}
-
-func intersectShape(shape *Shape, worldRay *Ray, intersections *Intersections, rayPool *sync.Pool) {
-	localRay := rayPool.Get().(*Ray)
-	defer rayPool.Put(localRay)
-	worldRay.TransformToShape(shape, localRay)
-	shape.strategy.localIntersect(shape, localRay, intersections)
-}
-
-func (shape Shape) normalAt(worldPoint *Tuple, tuplePool *sync.Pool) Tuple {
-	localPoint := tuplePool.Get().(*Tuple)
-	defer tuplePool.Put(localPoint)
-	MulTInPlace(shape.InverseTransformation, worldPoint, localPoint)
-	localNormal := shape.strategy.localNormalAt(&shape, localPoint)
-	worldNormal := shape.TransposeInverse.MulT(localNormal)
-	worldNormal[3] = 0
-	return worldNormal.Normalize()
 }
 
 func (shape Shape) calculateInverseTransformations() Shape {

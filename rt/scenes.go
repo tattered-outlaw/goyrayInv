@@ -1,4 +1,4 @@
-package engine
+package rt
 
 import (
 	"math"
@@ -9,12 +9,12 @@ func OneBall(width, height int) *Scene {
 		Position:  Point(-10, 10, -10),
 		Intensity: Color{1, 1, 1},
 	}
-	camera := NCamera(width, height, math.Pi/4, Point(0, 0, -12), Point(0, 0, 0), Vector(0, 1, 0))
+	camera := NCamera(width, height, math.Pi/4, Point(0, 0, -8), Point(0, 0, 0), Vector(0, 1, 0))
 	scene := NScene([]PointLight{pointLight}, camera)
 
 	scene.AddShape(NShape(Sphere{}).
 		withMaterial(DefaultMaterial().
-			withColor(Color{R: 1, G: 0.2, B: 1})).translateX(-2))
+			withColor(Color{R: 1, G: 0.2, B: 1})))
 
 	return scene
 }
