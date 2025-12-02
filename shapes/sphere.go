@@ -9,7 +9,7 @@ import (
 
 type Sphere struct{}
 
-func (Sphere) LocalIntersect(shape *Shape, localRay *Ray, intersections *Intersections) {
+func (*Sphere) LocalIntersect(_ *Engine, shape *Shape, localRay *Ray, intersections *Intersections) {
 	sphereToRay := localRay.Origin.Sub(Point(0, 0, 0))
 	a := localRay.Direction.Dot(*localRay.Direction)
 	b := 2 * localRay.Direction.Dot(sphereToRay)
@@ -23,6 +23,6 @@ func (Sphere) LocalIntersect(shape *Shape, localRay *Ray, intersections *Interse
 	}
 }
 
-func (Sphere) LocalNormalAt(_ *Shape, localPoint *Tuple) Tuple {
+func (*Sphere) LocalNormalAt(_ *Shape, localPoint *Tuple) Tuple {
 	return localPoint.Sub(Point(0, 0, 0))
 }

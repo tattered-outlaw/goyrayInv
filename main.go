@@ -16,7 +16,7 @@ func main() {
 	scale := 2
 	width := 960 * scale
 	height := 540 * scale
-	scene := scenes.BallScene(width, height)
+	scene := scenes.GroupScene1(width, height)
 	engine := rt.NEngine(scene)
 	fmt.Println("starting rendering...")
 	start := time.Now().UnixMilli()

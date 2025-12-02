@@ -23,28 +23,48 @@ func BallScene(width, height int) *Scene {
 	material := DefaultMaterial().WithColor(Color{R: 1, G: 0.9, B: 0.9}).WithSpecular(0)
 
 	// floor
-	scene.AddShape(NShape(Sphere{}).WithMaterial(material).
-		Scale(10, 0.01, 10))
+	floor := NShape(&Sphere{})
+	floor.Material(material)
+	floor.Scale(10, 0.01, 10)
+	scene.AddShape(floor)
 
 	// left wall
-	scene.AddShape(NShape(Sphere{}).WithMaterial(material).
-		Scale(10, 0.01, 10).RotateX(math.Pi/2).RotateY(-math.Pi/4).Translate(0, 0, 5))
+	leftWall := NShape(&Sphere{})
+	leftWall.Material(material)
+	leftWall.Scale(10, 0.01, 10)
+	leftWall.RotateX(math.Pi / 2)
+	leftWall.RotateY(-math.Pi / 4)
+	leftWall.Translate(0, 0, 5)
+	scene.AddShape(leftWall)
 
 	// right wall
-	scene.AddShape(NShape(Sphere{}).WithMaterial(material).
-		Scale(10, 0.01, 10).RotateX(math.Pi/2).RotateY(math.Pi/4).Translate(0, 0, 5))
+	rightWall := NShape(&Sphere{})
+	rightWall.Material(material)
+	rightWall.Scale(10, 0.01, 10)
+	rightWall.RotateX(math.Pi / 2)
+	rightWall.RotateY(math.Pi / 4)
+	rightWall.Translate(0, 0, 5)
+	scene.AddShape(rightWall)
 
 	//middle
-	scene.AddShape(NShape(Sphere{}).WithMaterial(DefaultMaterial().WithColor(Color{R: 0.1, G: 1, B: 0.5}).WithDiffuse(0.7).WithSpecular(0.3)).
-		Translate(-0.5, 1, 0.5))
+	middle := NShape(&Sphere{})
+	middle.Material(DefaultMaterial().WithColor(Color{R: 0.1, G: 1, B: 0.5}).WithDiffuse(0.7).WithSpecular(0.3))
+	middle.Translate(-0.5, 1, 0.5)
+	scene.AddShape(middle)
 
 	//right
-	scene.AddShape(NShape(Sphere{}).WithMaterial(DefaultMaterial().WithColor(Color{R: 0.5, G: 1, B: 0.1}).WithDiffuse(0.7).WithSpecular(0.3)).
-		Scale(0.5, 0.5, 0.5).Translate(1.5, 0.5, -0.5))
+	right := NShape(&Sphere{})
+	right.Material(DefaultMaterial().WithColor(Color{R: 0.5, G: 1, B: 0.1}).WithDiffuse(0.7).WithSpecular(0.3))
+	right.Scale(0.5, 0.5, 0.5)
+	right.Translate(1.5, 0.5, -0.5)
+	scene.AddShape(right)
 
 	//left
-	scene.AddShape(NShape(Sphere{}).WithMaterial(DefaultMaterial().WithColor(Color{R: 1, G: 0.8, B: 0.1}).WithDiffuse(0.7).WithSpecular(0.3)).
-		Scale(0.33, 0.33, 0.33).Translate(-1.5, 0.33, -0.75))
+	left := NShape(&Sphere{})
+	left.Material(DefaultMaterial().WithColor(Color{R: 1, G: 0.8, B: 0.1}).WithDiffuse(0.7).WithSpecular(0.3))
+	left.Scale(0.33, 0.33, 0.33)
+	left.Translate(-1.5, 0.33, -0.75)
+	scene.AddShape(left)
 
 	return scene
 }

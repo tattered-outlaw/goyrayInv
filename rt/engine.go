@@ -130,7 +130,7 @@ func intersectShapes(engine *Engine, worldRay *Ray, intersections *Intersections
 	scene := engine.scene
 	shapes := scene.shapes
 	for _, shape := range shapes {
-		intersectShape(engine, shape, worldRay, intersections)
+		IntersectShape(engine, shape, worldRay, intersections)
 	}
 	intersectionsSlice := intersections.array[:intersections.writeIndex]
 	sort.Slice(intersectionsSlice, func(i, j int) bool {
@@ -138,12 +138,12 @@ func intersectShapes(engine *Engine, worldRay *Ray, intersections *Intersections
 	})
 }
 
-func intersectShape(engine *Engine, shape *Shape, worldRay *Ray, intersections *Intersections) {
+func IntersectShape(engine *Engine, shape *Shape, worldRay *Ray, intersections *Intersections) {
 	localRay := engine.rayPool.Get().(*Ray)
 	defer engine.rayPool.Put(localRay)
 	worldRay.TransformToShape(shape, localRay)
 
-	shape.strategy.LocalIntersect(shape, localRay, intersections)
+	shape.strategy.LocalIntersect(engine, shape, localRay, intersections)
 }
 
 func shadeHit(engine *Engine, record HitRecord) Color {
@@ -204,16 +204,39 @@ func createHitRecord(engine *Engine, intersect *Intersection, ray *Ray) HitRecor
 	}
 }
 
+//func normalAt(shape *Shape, worldPoint *Tuple, tuplePool *sync.Pool) Tuple {
+//	localPoint := tuplePool.Get().(*Tuple)
+//	defer tuplePool.Put(localPoint)
+//	MulTInPlace(shape.InverseTransformation, worldPoint, localPoint)
+//
+//	localNormal := shape.strategy.LocalNormalAt(shape, localPoint)
+//
+//	worldNormal := shape.TransposeInverse.MulT(localNormal)
+//	worldNormal[3] = 0
+//	return worldNormal.Normalize()
+//}
+
 func normalAt(shape *Shape, worldPoint *Tuple, tuplePool *sync.Pool) Tuple {
-	localPoint := tuplePool.Get().(*Tuple)
-	defer tuplePool.Put(localPoint)
-	MulTInPlace(shape.InverseTransformation, worldPoint, localPoint)
+	localPoint := worldToObject(shape, *worldPoint)
+	localNormal := shape.strategy.LocalNormalAt(shape, &localPoint)
+	return normalToWorld(shape, localNormal)
+}
 
-	localNormal := shape.strategy.LocalNormalAt(shape, localPoint)
+func worldToObject(shape *Shape, point Tuple) Tuple {
+	if shape.Parent != nil {
+		point = worldToObject(shape.Parent, point)
+	}
+	return shape.InverseTransformation.MulT(point)
+}
 
-	worldNormal := shape.TransposeInverse.MulT(localNormal)
-	worldNormal[3] = 0
-	return worldNormal.Normalize()
+func normalToWorld(shape *Shape, normal Tuple) Tuple {
+	normal = shape.TransposeInverse.MulT(normal)
+	normal[3] = 0
+	normal = normal.Normalize()
+	if shape.Parent != nil {
+		normal = normalToWorld(shape.Parent, normal)
+	}
+	return normal
 }
 
 func reflect(in Tuple, normal Tuple) Tuple {
