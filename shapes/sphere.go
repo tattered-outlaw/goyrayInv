@@ -26,3 +26,9 @@ func (*Sphere) LocalIntersect(_ *Engine, shape *Shape, localRay *Ray, intersecti
 func (*Sphere) LocalNormalAt(_ *Shape, localPoint *Tuple) Tuple {
 	return localPoint.Sub(Point(0, 0, 0))
 }
+
+func (*Sphere) BoundsOf(_ *Shape) BoundingBox {
+	min := Point(-1, -1, -1)
+	max := Point(1, 1, 1)
+	return NBoundingBox(min, max)
+}

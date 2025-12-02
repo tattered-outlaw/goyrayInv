@@ -24,5 +24,6 @@ func NScene(pointLights []PointLight, camera Camera) *Scene {
 
 func (scene *Scene) AddShape(shape *Shape) {
 	shape.CalculateInverseTransformations()
+	shape.CalculateBounds()
 	scene.shapes = append(scene.shapes, shape)
 }

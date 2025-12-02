@@ -13,13 +13,13 @@ import (
 )
 
 func main() {
-	scale := 2
+	scale := 4
 	width := 960 * scale
 	height := 540 * scale
+	start := time.Now().UnixMilli()
 	scene := scenes.GroupScene1(width, height)
 	engine := rt.NEngine(scene)
-	fmt.Println("starting rendering...")
-	start := time.Now().UnixMilli()
+	fmt.Printf("starting rendering at %d ms\n", time.Now().UnixMilli()-start)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
 	wgCount := 16
 	var wg sync.WaitGroup

@@ -5,11 +5,15 @@ import . "goray/math"
 type ShapeStrategy interface {
 	LocalIntersect(engine *Engine, shape *Shape, localRay *Ray, intersections *Intersections)
 	LocalNormalAt(shape *Shape, worldPoint *Tuple) Tuple
+	BoundsOf(*Shape) BoundingBox
 }
 
 type Shape struct {
 	Parent                *Shape
-	transformation        Matrix4x4
+	Children              []*Shape
+	Bounds                *BoundingBox
+	ParentSpaceBounds     *BoundingBox
+	Transformation        Matrix4x4
 	InverseTransformation *Matrix4x4
 	TransposeInverse      *Matrix4x4
 	material              Material
@@ -19,7 +23,7 @@ type Shape struct {
 func NShape(strategy ShapeStrategy) *Shape {
 	return &Shape{
 		Parent:                nil,
-		transformation:        Identity4,
+		Transformation:        Identity4,
 		InverseTransformation: &Identity4,
 		TransposeInverse:      &Identity4,
 		material:              DefaultMaterial(),
@@ -28,10 +32,17 @@ func NShape(strategy ShapeStrategy) *Shape {
 }
 
 func (shape *Shape) CalculateInverseTransformations() {
-	inv, _ := shape.transformation.Inverse()
+	inv, _ := shape.Transformation.Inverse()
 	shape.InverseTransformation = &inv
 	transInverse := inv.Transpose()
 	shape.TransposeInverse = &transInverse
+}
+
+func (shape *Shape) CalculateBounds() {
+	bounds := shape.strategy.BoundsOf(shape)
+	shape.Bounds = &bounds
+	parentSpaceBounds := TransformBoundingBox(*shape.Bounds, &shape.Transformation)
+	shape.ParentSpaceBounds = &parentSpaceBounds
 }
 
 func (shape *Shape) getMaterial() Material {
@@ -43,42 +54,42 @@ func (shape *Shape) Material(m Material) {
 }
 
 func (shape *Shape) Translate(x, y, z float64) {
-	shape.transformation = shape.transformation.Translate(x, y, z)
+	shape.Transformation = shape.Transformation.Translate(x, y, z)
 }
 
 func (shape *Shape) TranslateX(x float64) {
-	shape.transformation = shape.transformation.TranslateX(x)
+	shape.Transformation = shape.Transformation.TranslateX(x)
 }
 
 func (shape *Shape) TranslateY(y float64) {
-	shape.transformation = shape.transformation.TranslateY(y)
+	shape.Transformation = shape.Transformation.TranslateY(y)
 }
 
 func (shape *Shape) TranslateZ(z float64) {
-	shape.transformation = shape.transformation.TranslateZ(z)
+	shape.Transformation = shape.Transformation.TranslateZ(z)
 }
 
 func (shape *Shape) Scale(x, y, z float64) {
-	shape.transformation = shape.transformation.Scale(x, y, z)
+	shape.Transformation = shape.Transformation.Scale(x, y, z)
 }
 
 func (shape *Shape) ScaleX(x float64) {
-	shape.transformation = shape.transformation.ScaleX(x)
+	shape.Transformation = shape.Transformation.ScaleX(x)
 }
 func (shape *Shape) ScaleY(y float64) {
-	shape.transformation = shape.transformation.ScaleY(y)
+	shape.Transformation = shape.Transformation.ScaleY(y)
 }
 func (shape *Shape) ScaleZ(z float64) {
-	shape.transformation = shape.transformation.ScaleZ(z)
+	shape.Transformation = shape.Transformation.ScaleZ(z)
 }
 
 func (shape *Shape) RotateX(x float64) {
-	shape.transformation = shape.transformation.RotateX(x)
+	shape.Transformation = shape.Transformation.RotateX(x)
 }
 
 func (shape *Shape) RotateY(y float64) {
-	shape.transformation = shape.transformation.RotateY(y)
+	shape.Transformation = shape.Transformation.RotateY(y)
 }
 func (shape *Shape) RotateZ(z float64) {
-	shape.transformation = shape.transformation.RotateZ(z)
+	shape.Transformation = shape.Transformation.RotateZ(z)
 }
