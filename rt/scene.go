@@ -1,5 +1,7 @@
 package rt
 
+import . "goray/math"
+
 type PointLight struct {
 	Position  Tuple
 	Intensity Color

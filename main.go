@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"goray/rt"
+	"goray/scenes"
 	"image"
 	"image/color"
 	"image/png"
@@ -15,7 +16,7 @@ func main() {
 	scale := 2
 	width := 960 * scale
 	height := 540 * scale
-	scene := rt.BallScene(width, height)
+	scene := scenes.BallScene(width, height)
 	engine := rt.NEngine(scene)
 	fmt.Println("starting rendering...")
 	start := time.Now().UnixMilli()

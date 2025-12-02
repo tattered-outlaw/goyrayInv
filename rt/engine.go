@@ -5,6 +5,8 @@ import (
 	"math"
 	"sort"
 	"sync"
+
+	. "goray/math"
 )
 
 const maxIntersections = 128
@@ -17,25 +19,25 @@ type Engine struct {
 }
 
 type Ray struct {
-	origin    *Tuple
-	direction *Tuple
+	Origin    *Tuple
+	Direction *Tuple
 }
 
 func NRay(origin, direction *Tuple) Ray {
 	result := Ray{}
-	result.origin = origin
-	result.direction = direction
+	result.Origin = origin
+	result.Direction = direction
 	return result
 }
 
 func (ray *Ray) Position(t float64) Tuple {
-	return ray.origin.Add(ray.direction.Scale(t))
+	return ray.Origin.Add(ray.Direction.Scale(t))
 }
 
 func (ray *Ray) TransformToShape(s *Shape, localRayBuffer *Ray) {
 	t := s.InverseTransformation
-	MulTInPlace(t, ray.origin, localRayBuffer.origin)
-	MulTInPlace(t, ray.direction, localRayBuffer.direction)
+	MulTInPlace(t, ray.Origin, localRayBuffer.Origin)
+	MulTInPlace(t, ray.Direction, localRayBuffer.Direction)
 }
 
 type Intersection struct {
@@ -141,7 +143,7 @@ func intersectShape(engine *Engine, shape *Shape, worldRay *Ray, intersections *
 	defer engine.rayPool.Put(localRay)
 	worldRay.TransformToShape(shape, localRay)
 
-	shape.strategy.localIntersect(shape, localRay, intersections)
+	shape.strategy.LocalIntersect(shape, localRay, intersections)
 }
 
 func shadeHit(engine *Engine, record HitRecord) Color {
@@ -184,7 +186,7 @@ func createHitRecord(engine *Engine, intersect *Intersection, ray *Ray) HitRecor
 	tuplePool := engine.tuplePool
 	point := ray.Position(intersect.t)
 	normalV := normalAt(intersect.shape, &point, tuplePool)
-	eyeV := ray.direction.Negate()
+	eyeV := ray.Direction.Negate()
 	inside := false
 	if normalV.Dot(eyeV) < 0 {
 		inside = true
@@ -207,7 +209,7 @@ func normalAt(shape *Shape, worldPoint *Tuple, tuplePool *sync.Pool) Tuple {
 	defer tuplePool.Put(localPoint)
 	MulTInPlace(shape.InverseTransformation, worldPoint, localPoint)
 
-	localNormal := shape.strategy.localNormalAt(shape, localPoint)
+	localNormal := shape.strategy.LocalNormalAt(shape, localPoint)
 
 	worldNormal := shape.TransposeInverse.MulT(localNormal)
 	worldNormal[3] = 0
@@ -224,8 +226,8 @@ func isInShadow(engine *Engine, light PointLight, point Tuple) bool {
 	direction := v.Normalize()
 	ray := engine.rayPool.Get().(*Ray)
 	defer engine.rayPool.Put(ray)
-	ray.origin = &point
-	ray.direction = &direction
+	ray.Origin = &point
+	ray.Direction = &direction
 	intersections := engine.intersectionsPool.Get().(*Intersections)
 	defer intersections.Return(engine.intersectionsPool)
 
