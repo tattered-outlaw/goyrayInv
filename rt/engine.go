@@ -36,8 +36,12 @@ func (ray *Ray) Position(t float64) Tuple {
 
 func (ray *Ray) TransformToShape(s *Shape, localRayBuffer *Ray) {
 	t := s.InverseTransformation
-	MulTInPlace(t, ray.Origin, localRayBuffer.Origin)
-	MulTInPlace(t, ray.Direction, localRayBuffer.Direction)
+	o := ray.Origin
+	d := ray.Direction
+	for r := 0; r < 4; r++ {
+		localRayBuffer.Origin[r] = t[r][0]*o[0] + t[r][1]*o[1] + t[r][2]*o[2] + t[r][3]*o[3]
+		localRayBuffer.Direction[r] = t[r][0]*d[0] + t[r][1]*d[1] + t[r][2]*d[2] + t[r][3]*d[3]
+	}
 }
 
 type Intersection struct {
@@ -85,17 +89,10 @@ func NEngine(scene *Scene) *Engine {
 			return &Ray{&Tuple{}, &Tuple{}}
 		},
 	}
-	tuplePool := &sync.Pool{
-		New: func() interface{} {
-			return &Tuple{}
-		},
-	}
-
 	return &Engine{
 		scene:             scene,
 		intersectionsPool: intersectionsPool,
 		rayPool:           rayPool,
-		tuplePool:         tuplePool,
 	}
 }
 
@@ -119,7 +116,7 @@ func colorAt(engine *Engine, ray *Ray) Color {
 			return Black
 		} else {
 			hit := intersectionsSlice[hitIndex]
-			hitRecord := createHitRecord(engine, &hit, ray)
+			hitRecord := createHitRecord(&hit, ray)
 			return shadeHit(engine, hitRecord)
 		}
 	}
@@ -146,7 +143,7 @@ func IntersectShape(engine *Engine, shape *Shape, worldRay *Ray, intersections *
 	shape.strategy.LocalIntersect(engine, shape, localRay, intersections)
 }
 
-func shadeHit(engine *Engine, record HitRecord) Color {
+func shadeHit(engine *Engine, record *HitRecord) Color {
 	total := Black
 	for _, light := range engine.scene.pointLights {
 		shadowed := isInShadow(engine, light, record.overPoint)
@@ -155,7 +152,7 @@ func shadeHit(engine *Engine, record HitRecord) Color {
 	return total
 }
 
-func lighting(material Material, light PointLight, point Tuple, eyeV Tuple, normalV Tuple, shadowed bool) Color {
+func lighting(material *Material, light *PointLight, point Tuple, eyeV Tuple, normalV Tuple, shadowed bool) Color {
 	effectiveColor := material.Color.Multiply(light.Intensity)
 	lightV := light.Position.Sub(point).Normalize()
 	ambient := effectiveColor.Scale(material.Ambient)
@@ -182,10 +179,9 @@ func getHitIndex(intersectionsSlice []Intersection) int {
 	return -1
 }
 
-func createHitRecord(engine *Engine, intersect *Intersection, ray *Ray) HitRecord {
-	tuplePool := engine.tuplePool
+func createHitRecord(intersect *Intersection, ray *Ray) *HitRecord {
 	point := ray.Position(intersect.t)
-	normalV := normalAt(intersect.shape, &point, tuplePool)
+	normalV := normalAt(intersect.shape, &point)
 	eyeV := ray.Direction.Negate()
 	inside := false
 	if normalV.Dot(eyeV) < 0 {
@@ -193,7 +189,7 @@ func createHitRecord(engine *Engine, intersect *Intersection, ray *Ray) HitRecor
 		normalV = normalV.Negate()
 	}
 	overPoint := point.Add(normalV.Scale(EPSILON))
-	return HitRecord{
+	return &HitRecord{
 		t:         intersect.t,
 		shape:     intersect.shape,
 		point:     point,
@@ -204,19 +200,7 @@ func createHitRecord(engine *Engine, intersect *Intersection, ray *Ray) HitRecor
 	}
 }
 
-//func normalAt(shape *Shape, worldPoint *Tuple, tuplePool *sync.Pool) Tuple {
-//	localPoint := tuplePool.Get().(*Tuple)
-//	defer tuplePool.Put(localPoint)
-//	MulTInPlace(shape.InverseTransformation, worldPoint, localPoint)
-//
-//	localNormal := shape.strategy.LocalNormalAt(shape, localPoint)
-//
-//	worldNormal := shape.TransposeInverse.MulT(localNormal)
-//	worldNormal[3] = 0
-//	return worldNormal.Normalize()
-//}
-
-func normalAt(shape *Shape, worldPoint *Tuple, tuplePool *sync.Pool) Tuple {
+func normalAt(shape *Shape, worldPoint *Tuple) Tuple {
 	localPoint := worldToObject(shape, *worldPoint)
 	localNormal := shape.strategy.LocalNormalAt(shape, &localPoint)
 	return normalToWorld(shape, localNormal)
@@ -243,7 +227,7 @@ func reflect(in Tuple, normal Tuple) Tuple {
 	return in.Sub(normal.Scale(2 * in.Dot(normal)))
 }
 
-func isInShadow(engine *Engine, light PointLight, point Tuple) bool {
+func isInShadow(engine *Engine, light *PointLight, point Tuple) bool {
 	v := light.Position.Sub(point)
 	distance := v.Magnitude()
 	direction := v.Normalize()

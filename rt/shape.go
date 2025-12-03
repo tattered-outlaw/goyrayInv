@@ -13,20 +13,21 @@ type Shape struct {
 	Children              []*Shape
 	Bounds                *BoundingBox
 	ParentSpaceBounds     *BoundingBox
-	Transformation        Matrix4x4
+	Transformation        *Matrix4x4
 	InverseTransformation *Matrix4x4
 	TransposeInverse      *Matrix4x4
-	material              Material
+	material              *Material
 	strategy              ShapeStrategy
 }
 
 func NShape(strategy ShapeStrategy) *Shape {
+	material := DefaultMaterial()
 	return &Shape{
 		Parent:                nil,
-		Transformation:        Identity4,
+		Transformation:        &Identity4,
 		InverseTransformation: &Identity4,
 		TransposeInverse:      &Identity4,
-		material:              DefaultMaterial(),
+		material:              &material,
 		strategy:              strategy,
 	}
 }
@@ -41,16 +42,16 @@ func (shape *Shape) CalculateInverseTransformations() {
 func (shape *Shape) CalculateBounds() {
 	bounds := shape.strategy.BoundsOf(shape)
 	shape.Bounds = &bounds
-	parentSpaceBounds := TransformBoundingBox(*shape.Bounds, &shape.Transformation)
+	parentSpaceBounds := TransformBoundingBox(*shape.Bounds, shape.Transformation)
 	shape.ParentSpaceBounds = &parentSpaceBounds
 }
 
-func (shape *Shape) getMaterial() Material {
+func (shape *Shape) getMaterial() *Material {
 	return shape.material
 }
 
 func (shape *Shape) Material(m Material) {
-	shape.material = m
+	shape.material = &m
 }
 
 func (shape *Shape) Translate(x, y, z float64) {

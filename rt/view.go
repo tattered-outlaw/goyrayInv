@@ -17,7 +17,7 @@ func viewTransform(from, to, up Tuple) Matrix4x4 {
 		{-forward[0], -forward[1], -forward[2], 0},
 		{0, 0, 0, 1},
 	}
-	return orientation.Mul(Translation(-from[0], -from[1], -from[2]))
+	return *orientation.Mul(Translation(-from[0], -from[1], -from[2]))
 }
 
 type Camera struct {
