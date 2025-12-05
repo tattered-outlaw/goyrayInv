@@ -1,4 +1,4 @@
-package math
+package internal
 
 import (
 	"testing"
@@ -36,22 +36,6 @@ func TestMatrix4x4_Determinant_zero(t *testing.T) {
 	if !FloatEquals(m.Determinant(), 0) {
 		t.Fail()
 	}
-}
-
-func TestMatrix4x4_Mul(t *testing.T) {
-	a := Matrix4x4{
-		{1, 2, 3, 4},
-		{5, 6, 7, 8},
-		{9, 8, 7, 6},
-		{5, 4, 3, 2},
-	}
-	b := Matrix4x4{
-		{-2, 1, 2, 3},
-		{3, 2, 1, -1},
-		{4, 3, 6, 5},
-		{1, 2, 7, 8},
-	}
-	t.Logf("%v", a.Mul(b))
 }
 
 func TestMatrix4x4_Transpose(t *testing.T) {

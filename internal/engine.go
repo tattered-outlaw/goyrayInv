@@ -1,12 +1,10 @@
-package rt
+package internal
 
 import (
 	"image/color"
 	"math"
 	"sort"
 	"sync"
-
-	. "goray/math"
 )
 
 const maxIntersections = 128

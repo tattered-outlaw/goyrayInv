@@ -1,9 +1,4 @@
-package shapes
-
-import (
-	. "goray/math"
-	. "goray/rt"
-)
+package internal
 
 type Group struct{}
 

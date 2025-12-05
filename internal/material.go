@@ -1,6 +1,4 @@
-package rt
-
-import . "goray/math"
+package internal
 
 type Material struct {
 	Color                                 Color

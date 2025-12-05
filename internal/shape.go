@@ -1,6 +1,4 @@
-package rt
-
-import . "goray/math"
+package internal
 
 type ShapeStrategy interface {
 	LocalIntersect(engine *Engine, shape *Shape, localRay *Ray, intersections *Intersections)

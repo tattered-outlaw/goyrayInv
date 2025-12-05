@@ -1,9 +1,7 @@
-package rt
+package internal
 
 import (
 	"math"
-
-	. "goray/math"
 )
 
 func viewTransform(from, to, up Tuple) Matrix4x4 {

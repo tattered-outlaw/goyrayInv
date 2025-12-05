@@ -1,9 +1,7 @@
-package rt
+package internal
 
 import (
 	"testing"
-
-	. "goray/math"
 )
 
 func Test_viewTransform(t *testing.T) {

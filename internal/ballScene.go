@@ -1,11 +1,7 @@
-package scenes
+package internal
 
 import (
 	"math"
-
-	. "goray/math"
-	. "goray/rt"
-	. "goray/shapes"
 )
 
 func BallScene(width, height int) *Scene {

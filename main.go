@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	"goray/rt"
-	"goray/scenes"
+	"goray/internal"
 	"image"
 	"image/color"
 	"image/png"
@@ -17,8 +16,8 @@ func main() {
 	width := 960 * scale
 	height := 540 * scale
 	start := time.Now().UnixMilli()
-	scene := scenes.GroupScene1(width, height)
-	engine := rt.NEngine(scene)
+	scene := internal.GroupScene1(width, height)
+	engine := internal.NEngine(scene)
 	fmt.Printf("starting rendering at %d ms\n", time.Now().UnixMilli()-start)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
 	wgCount := 16
@@ -36,7 +35,7 @@ type PixelDestination interface {
 	setPixel(x, y int, c color.Color)
 }
 
-func render(width, height int, engine *rt.Engine, destination PixelDestination, grNumber, grCount int, wg *sync.WaitGroup) {
+func render(width, height int, engine *internal.Engine, destination PixelDestination, grNumber, grCount int, wg *sync.WaitGroup) {
 	debug := false
 	debugX := 0 // width / 2
 	debugY := 0 // height / 2
@@ -44,10 +43,10 @@ func render(width, height int, engine *rt.Engine, destination PixelDestination, 
 	for x := grNumber; x < width; x += grCount {
 		for y := 0; y < height; y++ {
 			if x == debugX && y == debugY {
-				destination.setPixel(x, y, rt.GetPixel(engine, x, y))
+				destination.setPixel(x, y, internal.GetPixel(engine, x, y))
 			} else {
 				if !debug {
-					destination.setPixel(x, y, rt.GetPixel(engine, x, y))
+					destination.setPixel(x, y, internal.GetPixel(engine, x, y))
 				}
 			}
 		}

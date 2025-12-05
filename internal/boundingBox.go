@@ -1,7 +1,6 @@
-package rt
+package internal
 
 import (
-	. "goray/math"
 	"math"
 )
 
@@ -66,6 +65,35 @@ func TransformBoundingBox(boundingBox BoundingBox, transformation *Matrix4x4) Bo
 }
 
 func BBHitBy(bbox *BoundingBox, localRay *Ray) bool {
+	checkAxis := func(origin, direction, min, max float64) (float64, float64) {
+		tMinNumerator := min - origin
+		tMaxNumerator := max - origin
+
+		var tMin, tMax float64
+
+		if math.Abs(direction) >= EPSILON {
+			tMin = tMinNumerator / direction
+			tMax = tMaxNumerator / direction
+		} else {
+			if tMinNumerator == 0.0 {
+				tMin = 0
+			} else {
+				tMin = tMinNumerator * math.Inf(1)
+			}
+			if tMaxNumerator == 0.0 {
+				tMax = 0
+			} else {
+				tMax = tMaxNumerator * math.Inf(1)
+			}
+		}
+
+		if tMin <= tMax {
+			return tMin, tMax
+		} else {
+			return tMax, tMin
+		}
+	}
+
 	xTMin, xTMax := checkAxis(localRay.Origin[0], localRay.Direction[0], bbox.min[0], bbox.max[0])
 	yTMin, yTMax := checkAxis(localRay.Origin[1], localRay.Direction[1], bbox.min[1], bbox.max[1])
 	zTMin, zTMax := checkAxis(localRay.Origin[2], localRay.Direction[2], bbox.min[2], bbox.max[2])
@@ -74,35 +102,6 @@ func BBHitBy(bbox *BoundingBox, localRay *Ray) bool {
 	tMax := min(xTMax, min(yTMax, zTMax))
 
 	return tMin <= tMax
-}
-
-func checkAxis(origin, direction, min, max float64) (float64, float64) {
-	tMinNumerator := min - origin
-	tMaxNumerator := max - origin
-
-	var tMin, tMax float64
-
-	if math.Abs(direction) >= EPSILON {
-		tMin = tMinNumerator / direction
-		tMax = tMaxNumerator / direction
-	} else {
-		if tMinNumerator == 0.0 {
-			tMin = 0
-		} else {
-			tMin = tMinNumerator * math.Inf(1)
-		}
-		if tMaxNumerator == 0.0 {
-			tMax = 0
-		} else {
-			tMax = tMaxNumerator * math.Inf(1)
-		}
-	}
-
-	if tMin <= tMax {
-		return tMin, tMax
-	} else {
-		return tMax, tMin
-	}
 }
 
 func (boundingBox BoundingBox) ContainsPoint(point Tuple) bool {

@@ -1,6 +1,4 @@
-package rt
-
-import . "goray/math"
+package internal
 
 type PointLight struct {
 	Position  Tuple

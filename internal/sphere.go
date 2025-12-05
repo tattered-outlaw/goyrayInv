@@ -1,10 +1,7 @@
-package shapes
+package internal
 
 import (
 	"math"
-
-	. "goray/math"
-	. "goray/rt"
 )
 
 type Sphere struct{}
