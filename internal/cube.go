@@ -4,9 +4,19 @@ import (
 	"math"
 )
 
-type Cube struct{}
+type Cube struct {
+	commonState *SceneObjectCommonState
+}
 
-func (*Cube) LocalIntersect(_ *Engine, shape *Shape, localRay *Ray, intersections *Intersections) {
+func newCubde() *Cube {
+	return &Cube{newSceneObjectCommonState()}
+}
+
+func (cube *Cube) getCommonState() *SceneObjectCommonState {
+	return cube.commonState
+}
+
+func (cube *Cube) localIntersect(_ *Engine, localRay *Ray, intersections *Intersections) {
 	checkAxis := func(origin, direction float64) (float64, float64) {
 		tMinNumerator := -1.0 - origin
 		tMaxNumerator := 1.0 - origin
@@ -44,12 +54,12 @@ func (*Cube) LocalIntersect(_ *Engine, shape *Shape, localRay *Ray, intersection
 	tMax := min(xTMax, min(yTMax, zTMax))
 
 	if tMin <= tMax {
-		intersections.Add(tMin, shape)
-		intersections.Add(tMax, shape)
+		intersections.add(tMin, cube)
+		intersections.add(tMax, cube)
 	}
 }
 
-func (*Cube) LocalNormalAt(_ *Shape, localPoint *Tuple) Tuple {
+func (*Cube) localNormalAt(localPoint *Tuple) Tuple {
 	x := math.Abs(localPoint[0])
 	y := math.Abs(localPoint[1])
 	z := math.Abs(localPoint[2])
@@ -65,8 +75,8 @@ func (*Cube) LocalNormalAt(_ *Shape, localPoint *Tuple) Tuple {
 	return Vector(0, 0, z)
 }
 
-func (*Cube) BoundsOf(_ *Shape) BoundingBox {
+func (*Cube) boundsOf() *BoundingBox {
 	min := Point(-1, -1, -1)
 	max := Point(1, 1, 1)
-	return NBoundingBox(min, max)
+	return newBoundingBox(min, max)
 }

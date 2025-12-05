@@ -165,6 +165,12 @@ var Identity4 = Matrix4x4{
 	{0, 0, 0, 1},
 }
 
+func newIdentity4() *Matrix4x4 {
+	i := Identity4
+	// return address of copy for mutation
+	return &i
+}
+
 func (m Matrix4x4) MulT(t Tuple) Tuple {
 	result := Tuple{}
 	for r := 0; r < 4; r++ {
@@ -183,12 +189,25 @@ func (m Matrix4x4) Transpose() Matrix4x4 {
 	return result
 }
 
-func (m *Matrix4x4) Mul(n *Matrix4x4) *Matrix4x4 {
+func transpose4(m *Matrix4x4) *Matrix4x4 {
+	mT := m.Transpose()
+	return &mT
+}
+
+func (m *Matrix4x4) mul4x4(n *Matrix4x4) *Matrix4x4 {
 	result := Matrix4x4{}
 	for r := 0; r < 4; r++ {
 		for c := 0; c < 4; c++ {
 			result[r][c] = m[r][0]*n[0][c] + m[r][1]*n[1][c] + m[r][2]*n[2][c] + m[r][3]*n[3][c]
 		}
+	}
+	return &result
+}
+
+func inverse4(m *Matrix4x4) *Matrix4x4 {
+	result, err := m.Inverse()
+	if err != nil {
+		panic(err)
 	}
 	return &result
 }
@@ -229,7 +248,7 @@ func Translation(x, y, z float64) *Matrix4x4 {
 }
 
 func (m *Matrix4x4) Translate(x, y, z float64) *Matrix4x4 {
-	return Translation(x, y, z).Mul(m)
+	return Translation(x, y, z).mul4x4(m)
 }
 
 func (m *Matrix4x4) TranslateX(x float64) *Matrix4x4 {
@@ -250,7 +269,16 @@ func (m *Matrix4x4) Scale(x, y, z float64) *Matrix4x4 {
 		{0, y, 0, 0},
 		{0, 0, z, 0},
 		{0, 0, 0, 1},
-	}).Mul(m)
+	}).mul4x4(m)
+}
+
+func Scaling(x, y, z float64) *Matrix4x4 {
+	return &Matrix4x4{
+		{x, 0, 0, 0},
+		{0, y, 0, 0},
+		{0, 0, z, 0},
+		{0, 0, 0, 1},
+	}
 }
 
 func (m *Matrix4x4) ScaleX(x float64) *Matrix4x4 {
@@ -271,7 +299,7 @@ func (m *Matrix4x4) RotateX(theta float64) *Matrix4x4 {
 		{0, c, -s, 0},
 		{0, s, c, 0},
 		{0, 0, 0, 1},
-	}).Mul(m)
+	}).mul4x4(m)
 }
 
 func (m *Matrix4x4) RotateY(theta float64) *Matrix4x4 {
@@ -282,7 +310,7 @@ func (m *Matrix4x4) RotateY(theta float64) *Matrix4x4 {
 		{0, 1, 0, 0},
 		{-s, 0, c, 0},
 		{0, 0, 0, 1},
-	}).Mul(m)
+	}).mul4x4(m)
 }
 
 func (m *Matrix4x4) RotateZ(theta float64) *Matrix4x4 {
@@ -293,5 +321,5 @@ func (m *Matrix4x4) RotateZ(theta float64) *Matrix4x4 {
 		{s, c, 0, 0},
 		{0, 0, 1, 0},
 		{0, 0, 0, 1},
-	}).Mul(m)
+	}).mul4x4(m)
 }

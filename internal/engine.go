@@ -32,8 +32,8 @@ func (ray *Ray) Position(t float64) Tuple {
 	return ray.Origin.Add(ray.Direction.Scale(t))
 }
 
-func (ray *Ray) TransformToShape(s *Shape, localRayBuffer *Ray) {
-	t := s.InverseTransformation
+func (ray *Ray) transformToObject(object SceneObject, localRayBuffer *Ray) {
+	t := object.getCommonState().inverseTransformation
 	o := ray.Origin
 	d := ray.Direction
 	for r := 0; r < 4; r++ {
@@ -43,8 +43,8 @@ func (ray *Ray) TransformToShape(s *Shape, localRayBuffer *Ray) {
 }
 
 type Intersection struct {
-	t     float64
-	shape *Shape
+	t      float64
+	object SceneObject
 }
 
 type Intersections struct {
@@ -52,12 +52,12 @@ type Intersections struct {
 	writeIndex int
 }
 
-func (i *Intersections) Add(t float64, shape *Shape) {
+func (i *Intersections) add(t float64, object SceneObject) {
 	if i.writeIndex == maxIntersections {
 		panic("too many intersections - consider increasing maxIntersections or changing bounding strategy")
 	}
 	i.array[i.writeIndex].t = t
-	i.array[i.writeIndex].shape = shape
+	i.array[i.writeIndex].object = object
 	i.writeIndex++
 }
 
@@ -68,7 +68,7 @@ func (i *Intersections) Return(pool *sync.Pool) {
 
 type HitRecord struct {
 	t         float64
-	shape     *Shape
+	object    SceneObject
 	point     Tuple
 	overPoint Tuple
 	eyeV      Tuple
@@ -76,7 +76,7 @@ type HitRecord struct {
 	inside    bool
 }
 
-func NEngine(scene *Scene) *Engine {
+func NewEngine(scene *Scene) *Engine {
 	intersectionsPool := &sync.Pool{
 		New: func() interface{} {
 			return &Intersections{array: make([]Intersection, maxIntersections)}
@@ -87,6 +87,9 @@ func NEngine(scene *Scene) *Engine {
 			return &Ray{&Tuple{}, &Tuple{}}
 		},
 	}
+
+	calculateBounds(scene.rootGroup)
+
 	return &Engine{
 		scene:             scene,
 		intersectionsPool: intersectionsPool,
@@ -123,29 +126,27 @@ func colorAt(engine *Engine, ray *Ray) Color {
 
 func intersectShapes(engine *Engine, worldRay *Ray, intersections *Intersections) {
 	scene := engine.scene
-	shapes := scene.shapes
-	for _, shape := range shapes {
-		IntersectShape(engine, shape, worldRay, intersections)
-	}
+	rootGroup := scene.rootGroup
+	intersectObject(engine, rootGroup, worldRay, intersections)
 	intersectionsSlice := intersections.array[:intersections.writeIndex]
 	sort.Slice(intersectionsSlice, func(i, j int) bool {
 		return intersectionsSlice[i].t < intersectionsSlice[j].t
 	})
 }
 
-func IntersectShape(engine *Engine, shape *Shape, worldRay *Ray, intersections *Intersections) {
+func intersectObject(engine *Engine, object SceneObject, worldRay *Ray, intersections *Intersections) {
 	localRay := engine.rayPool.Get().(*Ray)
 	defer engine.rayPool.Put(localRay)
-	worldRay.TransformToShape(shape, localRay)
+	worldRay.transformToObject(object, localRay)
 
-	shape.strategy.LocalIntersect(engine, shape, localRay, intersections)
+	object.localIntersect(engine, localRay, intersections)
 }
 
 func shadeHit(engine *Engine, record *HitRecord) Color {
 	total := Black
 	for _, light := range engine.scene.pointLights {
 		shadowed := isInShadow(engine, light, record.overPoint)
-		total = total.Add(lighting(record.shape.getMaterial(), light, record.point, record.eyeV, record.normalV, shadowed))
+		total = total.Add(lighting(record.object.getCommonState().material, light, record.point, record.eyeV, record.normalV, shadowed))
 	}
 	return total
 }
@@ -179,7 +180,7 @@ func getHitIndex(intersectionsSlice []Intersection) int {
 
 func createHitRecord(intersect *Intersection, ray *Ray) *HitRecord {
 	point := ray.Position(intersect.t)
-	normalV := normalAt(intersect.shape, &point)
+	normalV := normalAt(intersect.object, &point)
 	eyeV := ray.Direction.Negate()
 	inside := false
 	if normalV.Dot(eyeV) < 0 {
@@ -189,7 +190,7 @@ func createHitRecord(intersect *Intersection, ray *Ray) *HitRecord {
 	overPoint := point.Add(normalV.Scale(EPSILON))
 	return &HitRecord{
 		t:         intersect.t,
-		shape:     intersect.shape,
+		object:    intersect.object,
 		point:     point,
 		overPoint: overPoint,
 		eyeV:      eyeV,
@@ -198,25 +199,27 @@ func createHitRecord(intersect *Intersection, ray *Ray) *HitRecord {
 	}
 }
 
-func normalAt(shape *Shape, worldPoint *Tuple) Tuple {
-	localPoint := worldToObject(shape, *worldPoint)
-	localNormal := shape.strategy.LocalNormalAt(shape, &localPoint)
-	return normalToWorld(shape, localNormal)
+func normalAt(object SceneObject, worldPoint *Tuple) Tuple {
+	localPoint := worldToObject(object, *worldPoint)
+	localNormal := object.localNormalAt(&localPoint)
+	return normalToWorld(object, localNormal)
 }
 
-func worldToObject(shape *Shape, point Tuple) Tuple {
-	if shape.Parent != nil {
-		point = worldToObject(shape.Parent, point)
+func worldToObject(object SceneObject, point Tuple) Tuple {
+	state := object.getCommonState()
+	if state.parent != nil {
+		point = worldToObject(state.parent, point)
 	}
-	return shape.InverseTransformation.MulT(point)
+	return state.inverseTransformation.MulT(point)
 }
 
-func normalToWorld(shape *Shape, normal Tuple) Tuple {
-	normal = shape.TransposeInverse.MulT(normal)
+func normalToWorld(object SceneObject, normal Tuple) Tuple {
+	state := object.getCommonState()
+	normal = state.transposeInverse.MulT(normal)
 	normal[3] = 0
 	normal = normal.Normalize()
-	if shape.Parent != nil {
-		normal = normalToWorld(shape.Parent, normal)
+	if state.parent != nil {
+		normal = normalToWorld(state.parent, normal)
 	}
 	return normal
 }

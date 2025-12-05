@@ -14,95 +14,89 @@ func GroupScene1(width, height int) *Scene {
 		Intensity: Color{R: 1, G: 1, B: 1}.Scale(0.5),
 	}
 	camera := NCamera(width, height, math.Pi/5, Point(0, 3, -20), Point(0, 0, 0), Vector(0, 1, 0))
-	scene := NScene([]PointLight{pointLight1, pointLight2}, camera)
+	scene := newScene([]PointLight{pointLight1, pointLight2}, camera)
 
 	zSpace := 2.0
 
-	group := &Group{}
-	groupShape := NShape(group)
+	group := scene.rootGroup
 
 	front := half()
-	front.TranslateZ(-zSpace)
-	group.Add(groupShape, front)
+	translate(front, 0, 0, -zSpace)
+	group.add(front)
 
 	back := half()
-	back.TranslateZ(zSpace)
-	group.Add(groupShape, back)
-
-	scene.AddShape(groupShape)
+	translate(back, 0, 0, zSpace)
+	group.add(back)
 
 	return scene
 }
 
-func half() *Shape {
+func half() SceneObject {
 	xSpace := 2.0
 
-	group := &Group{}
-	groupShape := NShape(group)
+	group := newGroup()
 
 	left := quarter()
-	left.TranslateX(-xSpace)
-	group.Add(groupShape, left)
+	translate(left, -xSpace, 0, 0)
+	group.add(left)
 
 	right := quarter()
-	right.TranslateX(xSpace)
-	group.Add(groupShape, right)
+	translate(right, xSpace, 0, 0)
+	group.add(right)
 
-	return groupShape
+	return group
 }
 
-func quarter() *Shape {
-	group := &Group{}
-	groupShape := NShape(group)
+func quarter() SceneObject {
+	group := newGroup()
 
 	ySpace := 2.0
 
 	member := eighth()
-	member.TranslateY(ySpace)
-	group.Add(groupShape, member)
+	translate(member, 0, -ySpace, 0)
+	group.add(member)
 
 	member = eighth()
-	member.TranslateY(-ySpace)
-	group.Add(groupShape, member)
+	translate(member, 0, ySpace, 0)
+	group.add(member)
 
-	return groupShape
+	return group
 }
 
-func eighth() *Shape {
-	group := &Group{}
-	groupShape := NShape(group)
+func eighth() SceneObject {
+	group := newGroup()
 
 	outGap := 1.75
 	outComp := math.Sqrt(outGap * outGap / 2)
 
-	sphereCentre := NShape(&Sphere{})
-	sphereCentre.Material(DefaultMaterial().WithColor(Color{R: 1, G: 0.2, B: 1}))
-	group.Add(groupShape, sphereCentre)
+	sphereCentre := newSphere()
+	setMaterial(sphereCentre, DefaultMaterial().WithColor(Color{R: 1, G: 0.2, B: 1}))
+	group.add(sphereCentre)
 
-	sphereNE := NShape(&Sphere{})
-	sphereNE.Material(DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
-	sphereNE.Scale(0.5, 0.5, 0.5)
-	sphereNE.Translate(outComp, 0, outComp)
-	group.Add(groupShape, sphereNE)
+	sphereNE := newSphere()
+	setMaterial(sphereNE, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	scale(sphereNE, 0.5, 0.5, 0.5)
+	translate(sphereNE, outComp, 0, outComp)
+	group.add(sphereNE)
 
-	sphereSE := NShape(&Sphere{})
-	sphereSE.Material(DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
-	sphereSE.Scale(0.5, 0.5, 0.5)
-	sphereSE.Translate(outComp, 0, -outComp)
-	group.Add(groupShape, sphereSE)
+	sphereSE := newSphere()
+	setMaterial(sphereSE, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	scale(sphereSE, 0.5, 0.5, 0.5)
+	translate(sphereSE, outComp, 0, -outComp)
+	group.add(sphereSE)
 
-	sphereSW := NShape(&Sphere{})
-	sphereSW.Material(DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
-	sphereSW.Scale(0.5, 0.5, 0.5)
-	sphereSW.Translate(-outComp, 0, -outComp)
-	group.Add(groupShape, sphereSW)
+	sphereSW := newSphere()
+	setMaterial(sphereSW, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	scale(sphereSW, 0.5, 0.5, 0.5)
+	translate(sphereSW, -outComp, 0, -outComp)
+	group.add(sphereSW)
 
-	sphereNW := NShape(&Sphere{})
-	sphereNW.Material(DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
-	sphereNW.Scale(0.5, 0.5, 0.5)
-	sphereNW.Translate(-outComp, 0, outComp)
+	sphereNW := newSphere()
+	setMaterial(sphereNW, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	scale(sphereNW, 0.5, 0.5, 0.5)
+	translate(sphereNW, -outComp, 0, outComp)
 
-	group.Add(groupShape, sphereNW)
+	group.add(sphereNW)
 
-	return groupShape
+	return group
 }

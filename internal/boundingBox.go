@@ -8,15 +8,15 @@ type BoundingBox struct {
 	min, max Tuple
 }
 
-func EmptyBoundingBox() BoundingBox {
-	return BoundingBox{Point(math.Inf(+1), math.Inf(+1), math.Inf(+1)), Point(math.Inf(-1), math.Inf(-1), math.Inf(-1))}
+func emptyBoundingBox() *BoundingBox {
+	return &BoundingBox{Point(math.Inf(+1), math.Inf(+1), math.Inf(+1)), Point(math.Inf(-1), math.Inf(-1), math.Inf(-1))}
 }
 
-func NBoundingBox(min, max Tuple) BoundingBox {
-	return BoundingBox{min, max}
+func newBoundingBox(min, max Tuple) *BoundingBox {
+	return &BoundingBox{min, max}
 }
 
-func AddPointToBoundingBox(boundingBox BoundingBox, point Tuple) BoundingBox {
+func addPointToBoundingBox(boundingBox *BoundingBox, point Tuple) {
 	if point[0] < boundingBox.min[0] {
 		boundingBox.min[0] = point[0]
 	}
@@ -35,16 +35,14 @@ func AddPointToBoundingBox(boundingBox BoundingBox, point Tuple) BoundingBox {
 	if point[2] > boundingBox.max[2] {
 		boundingBox.max[2] = point[2]
 	}
-	return boundingBox
 }
 
-func AddBoundingBoxes(boundingBox BoundingBox, otherBox BoundingBox) BoundingBox {
-	boundingBox = AddPointToBoundingBox(boundingBox, otherBox.min)
-	boundingBox = AddPointToBoundingBox(boundingBox, otherBox.max)
-	return boundingBox
+func addBoundingBoxTo(boundingBox *BoundingBox, otherBox *BoundingBox) {
+	addPointToBoundingBox(boundingBox, otherBox.min)
+	addPointToBoundingBox(boundingBox, otherBox.max)
 }
 
-func TransformBoundingBox(boundingBox BoundingBox, transformation *Matrix4x4) BoundingBox {
+func transformBoundingBox(boundingBox *BoundingBox, transformation *Matrix4x4) *BoundingBox {
 	p1 := boundingBox.min
 	p2 := Point(boundingBox.min[0], boundingBox.min[1], boundingBox.max[2])
 	p3 := Point(boundingBox.min[0], boundingBox.max[1], boundingBox.min[2])
@@ -54,11 +52,11 @@ func TransformBoundingBox(boundingBox BoundingBox, transformation *Matrix4x4) Bo
 	p7 := Point(boundingBox.max[0], boundingBox.max[1], boundingBox.min[2])
 	p8 := boundingBox.max
 
-	boundingBox = EmptyBoundingBox()
+	boundingBox = emptyBoundingBox()
 
 	for _, p := range [...]Tuple{p1, p2, p3, p4, p5, p6, p7, p8} {
 		point := transformation.MulT(p)
-		boundingBox = AddPointToBoundingBox(boundingBox, point)
+		addPointToBoundingBox(boundingBox, point)
 	}
 
 	return boundingBox

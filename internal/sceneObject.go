@@ -1,0 +1,62 @@
+package internal
+
+type SceneObject interface {
+	getCommonState() *SceneObjectCommonState
+	localIntersect(engine *Engine, localRay *Ray, intersections *Intersections)
+	localNormalAt(localPoint *Tuple) Tuple
+	boundsOf() *BoundingBox
+}
+
+type SceneObjectCommonState struct {
+	parent                SceneObject
+	transformation        *Matrix4x4
+	material              *Material
+	bounds                *BoundingBox
+	parentSpaceBounds     *BoundingBox
+	inverseTransformation *Matrix4x4
+	transposeInverse      *Matrix4x4
+}
+
+func newSceneObjectCommonState() *SceneObjectCommonState {
+	return &SceneObjectCommonState{
+		transformation:        newIdentity4(),
+		inverseTransformation: newIdentity4(),
+		transposeInverse:      newIdentity4(),
+	}
+}
+
+func calculateInverseTransformations(object SceneObject) {
+	config := object.getCommonState()
+	inv := inverse4(config.transformation)
+	config.inverseTransformation = inv
+	config.transposeInverse = transpose4(inv)
+}
+
+func setParent(object SceneObject, parent SceneObject) {
+	object.getCommonState().parent = parent
+}
+
+func calculateBounds(object SceneObject) {
+	config := object.getCommonState()
+	bounds := object.boundsOf()
+	config.bounds = bounds
+	parentSpaceBounds := transformBoundingBox(config.bounds, config.transformation)
+	config.parentSpaceBounds = parentSpaceBounds
+}
+
+func transform(object SceneObject, transformation *Matrix4x4) {
+	t := object.getCommonState().transformation
+	object.getCommonState().transformation = transformation.mul4x4(t)
+}
+
+func scale(object SceneObject, x, y, z float64) {
+	transform(object, Scaling(x, y, z))
+}
+
+func translate(object SceneObject, x, y, z float64) {
+	transform(object, Translation(x, y, z))
+}
+
+func setMaterial(object SceneObject, material Material) {
+	object.getCommonState().material = &material
+}

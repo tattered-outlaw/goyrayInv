@@ -4,9 +4,19 @@ import (
 	"math"
 )
 
-type Sphere struct{}
+type Sphere struct {
+	commonState *SceneObjectCommonState
+}
 
-func (*Sphere) LocalIntersect(_ *Engine, shape *Shape, localRay *Ray, intersections *Intersections) {
+func newSphere() *Sphere {
+	return &Sphere{newSceneObjectCommonState()}
+}
+
+func (sphere *Sphere) getCommonState() *SceneObjectCommonState {
+	return sphere.commonState
+}
+
+func (sphere *Sphere) localIntersect(_ *Engine, localRay *Ray, intersections *Intersections) {
 	sphereToRay := localRay.Origin.Sub(Point(0, 0, 0))
 	a := localRay.Direction.Dot(*localRay.Direction)
 	b := 2 * localRay.Direction.Dot(sphereToRay)
@@ -15,17 +25,17 @@ func (*Sphere) LocalIntersect(_ *Engine, shape *Shape, localRay *Ray, intersecti
 	if discriminant >= 0 {
 		t1 := (-b - math.Sqrt(discriminant)) / (2 * a)
 		t2 := (-b + math.Sqrt(discriminant)) / (2 * a)
-		intersections.Add(t1, shape)
-		intersections.Add(t2, shape)
+		intersections.add(t1, sphere)
+		intersections.add(t2, sphere)
 	}
 }
 
-func (*Sphere) LocalNormalAt(_ *Shape, localPoint *Tuple) Tuple {
+func (*Sphere) localNormalAt(localPoint *Tuple) Tuple {
 	return localPoint.Sub(Point(0, 0, 0))
 }
 
-func (*Sphere) BoundsOf(_ *Shape) BoundingBox {
+func (*Sphere) boundsOf() *BoundingBox {
 	min := Point(-1, -1, -1)
 	max := Point(1, 1, 1)
-	return NBoundingBox(min, max)
+	return newBoundingBox(min, max)
 }

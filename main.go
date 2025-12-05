@@ -17,7 +17,7 @@ func main() {
 	height := 540 * scale
 	start := time.Now().UnixMilli()
 	scene := internal.GroupScene1(width, height)
-	engine := internal.NEngine(scene)
+	engine := internal.NewEngine(scene)
 	fmt.Printf("starting rendering at %d ms\n", time.Now().UnixMilli()-start)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}
 	wgCount := 16
