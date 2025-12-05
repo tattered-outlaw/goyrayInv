@@ -65,7 +65,7 @@ func (p PngWriter) setPixel(x, y int, c color.Color) {
 }
 
 func (p PngWriter) save(filename string) {
-	f, _ := os.Create("out/" + filename + ".png")
+	f, _ := os.Create("images/" + filename + ".png")
 	err := png.Encode(f, p.image)
 	if err != nil {
 		panic(err)
