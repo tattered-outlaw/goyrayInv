@@ -16,6 +16,29 @@ type Engine struct {
 	tuplePool         *sync.Pool
 }
 
+func NewEngine(scene *Scene) *Engine {
+	intersectionsPool := &sync.Pool{
+		New: func() interface{} {
+			return &Intersections{array: make([]Intersection, maxIntersections)}
+		},
+	}
+	rayPool := &sync.Pool{
+		New: func() interface{} {
+			return &Ray{&Tuple{}, &Tuple{}}
+		},
+	}
+
+	calculateBounds(scene.rootGroup)
+	rootGroup := scene.rootGroup
+	rootGroup.children = unGroup(rootGroup, true)
+
+	return &Engine{
+		scene:             scene,
+		intersectionsPool: intersectionsPool,
+		rayPool:           rayPool,
+	}
+}
+
 type Ray struct {
 	Origin    *Tuple
 	Direction *Tuple
@@ -74,27 +97,6 @@ type HitRecord struct {
 	eyeV      Tuple
 	normalV   Tuple
 	inside    bool
-}
-
-func NewEngine(scene *Scene) *Engine {
-	intersectionsPool := &sync.Pool{
-		New: func() interface{} {
-			return &Intersections{array: make([]Intersection, maxIntersections)}
-		},
-	}
-	rayPool := &sync.Pool{
-		New: func() interface{} {
-			return &Ray{&Tuple{}, &Tuple{}}
-		},
-	}
-
-	calculateBounds(scene.rootGroup)
-
-	return &Engine{
-		scene:             scene,
-		intersectionsPool: intersectionsPool,
-		rayPool:           rayPool,
-	}
 }
 
 func GetPixel(engine *Engine, x, y int) color.Color {
