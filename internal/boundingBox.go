@@ -62,7 +62,7 @@ func transformBoundingBox(boundingBox *BoundingBox, transformation *Matrix4x4) *
 	return boundingBox
 }
 
-func BBHitBy(bbox *BoundingBox, localRay *Ray) bool {
+func BBHitBy(boundingBox *BoundingBox, localRay *Ray) bool {
 	checkAxis := func(origin, direction, min, max float64) (float64, float64) {
 		tMinNumerator := min - origin
 		tMaxNumerator := max - origin
@@ -92,9 +92,9 @@ func BBHitBy(bbox *BoundingBox, localRay *Ray) bool {
 		}
 	}
 
-	xTMin, xTMax := checkAxis(localRay.Origin[0], localRay.Direction[0], bbox.min[0], bbox.max[0])
-	yTMin, yTMax := checkAxis(localRay.Origin[1], localRay.Direction[1], bbox.min[1], bbox.max[1])
-	zTMin, zTMax := checkAxis(localRay.Origin[2], localRay.Direction[2], bbox.min[2], bbox.max[2])
+	xTMin, xTMax := checkAxis(localRay.Origin[0], localRay.Direction[0], boundingBox.min[0], boundingBox.max[0])
+	yTMin, yTMax := checkAxis(localRay.Origin[1], localRay.Direction[1], boundingBox.min[1], boundingBox.max[1])
+	zTMin, zTMax := checkAxis(localRay.Origin[2], localRay.Direction[2], boundingBox.min[2], boundingBox.max[2])
 
 	tMin := max(xTMin, max(yTMin, zTMin))
 	tMax := min(xTMax, min(yTMax, zTMax))
@@ -102,12 +102,42 @@ func BBHitBy(bbox *BoundingBox, localRay *Ray) bool {
 	return tMin <= tMax
 }
 
-func (boundingBox BoundingBox) ContainsPoint(point Tuple) bool {
+func (boundingBox *BoundingBox) ContainsPoint(point Tuple) bool {
 	return point[0] >= boundingBox.min[0] && point[0] <= boundingBox.max[0] &&
 		point[1] >= boundingBox.min[1] && point[1] <= boundingBox.max[1] &&
 		point[2] >= boundingBox.min[2] && point[2] <= boundingBox.max[2]
 }
 
-func (boundingBox BoundingBox) ContainsBox(otherBox BoundingBox) bool {
+func (boundingBox *BoundingBox) ContainsBox(otherBox *BoundingBox) bool {
 	return boundingBox.ContainsPoint(otherBox.min) && boundingBox.ContainsPoint(otherBox.max)
+}
+
+func splitBoundingBox(boundingBox *BoundingBox) (*BoundingBox, *BoundingBox) {
+	dx := boundingBox.max[0] - boundingBox.min[0]
+	dy := boundingBox.max[1] - boundingBox.min[1]
+	dz := boundingBox.max[2] - boundingBox.min[2]
+
+	max := math.Max(dx, math.Max(dy, dz))
+
+	x0, y0, z0 := boundingBox.min[0], boundingBox.min[1], boundingBox.min[2]
+	x1, y1, z1 := boundingBox.max[0], boundingBox.max[1], boundingBox.max[2]
+
+	if max == dx {
+		x0 = x0 + dx/2.0
+		x1 = x0
+	} else if max == dy {
+		y0 = y0 + dy/2.0
+		y1 = y0
+	} else {
+		z0 = z0 + dz/2.0
+		z1 = z0
+	}
+
+	midMin := Point(x0, y0, z0)
+	midMax := Point(x1, y1, z1)
+
+	left := newBoundingBox(boundingBox.min, midMax)
+	right := newBoundingBox(midMin, boundingBox.max)
+
+	return left, right
 }

@@ -35,7 +35,5 @@ func (*Sphere) localNormalAt(localPoint *Tuple) Tuple {
 }
 
 func (*Sphere) boundsOf() *BoundingBox {
-	min := Point(-1, -1, -1)
-	max := Point(1, 1, 1)
-	return newBoundingBox(min, max)
+	return newBoundingBox(Point(-1, -1, -1), Point(1, 1, 1))
 }

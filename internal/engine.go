@@ -8,6 +8,7 @@ import (
 )
 
 const maxIntersections = 128
+const groupSplitThreshold = 10
 
 type Engine struct {
 	scene             *Scene
@@ -31,6 +32,7 @@ func NewEngine(scene *Scene) *Engine {
 	calculateBounds(scene.rootGroup)
 	rootGroup := scene.rootGroup
 	rootGroup.children = unGroup(rootGroup, true)
+	divideGroup(rootGroup, groupSplitThreshold)
 
 	return &Engine{
 		scene:             scene,
