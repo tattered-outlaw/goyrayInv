@@ -18,10 +18,12 @@ type SceneObjectCommonState struct {
 }
 
 func newSceneObjectCommonState() *SceneObjectCommonState {
+	material := DefaultMaterial()
 	return &SceneObjectCommonState{
 		transformation:        newIdentity4(),
 		inverseTransformation: newIdentity4(),
 		transposeInverse:      newIdentity4(),
+		material:              &material,
 	}
 }
 

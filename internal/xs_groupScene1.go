@@ -14,12 +14,17 @@ func GroupScene1(width, height int) *Scene {
 		Position:  Point(10, 5, -20),
 		Intensity: Color{R: 1, G: 1, B: 1}.Scale(lightScale),
 	}
-	camera := NCamera(width, height, math.Pi/5, Point(0, 3, -20), Point(0, 0, 0), Vector(0, 1, 0))
+	camera := NCamera(width, height, math.Pi/5, Point(0, 2, -50), Point(0, -2, 0), Vector(0, 1, 0))
 	scene := newScene([]PointLight{pointLight1, pointLight2}, camera)
 
 	zSpace := 2.0
 
 	group := scene.rootGroup
+
+	floor := newPlane()
+	translate(floor, 0, -4, 0)
+	group.add(floor)
+	setMaterial(floor, DefaultMaterial().WithColor(Color{R: 0.5, G: 0.5, B: 0.5}).WithReflectivity(0.02))
 
 	middle := newSphere()
 	material := DefaultMaterial().WithColor(Color{R: 0.1, G: 0.1, B: 0.1}).WithReflectivity(0.4)
