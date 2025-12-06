@@ -2,21 +2,22 @@ package main
 
 import (
 	"fmt"
-	"goray/internal"
 	"image"
 	"image/color"
 	"image/png"
 	"os"
 	"sync"
 	"time"
+
+	"goray/internal"
 )
 
 func main() {
-	scale := 4
+	scale := 2
 	width := 960 * scale
 	height := 540 * scale
 	start := time.Now().UnixMilli()
-	scene := internal.GroupScene1(width, height)
+	scene := internal.OneBall(width, height)
 	engine := internal.NewEngine(scene)
 	fmt.Printf("starting rendering at %d ms\n", time.Now().UnixMilli()-start)
 	pngWriter := PngWriter{width: width, height: height, image: image.NewRGBA(image.Rect(0, 0, width, height))}

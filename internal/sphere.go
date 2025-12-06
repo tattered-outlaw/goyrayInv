@@ -18,7 +18,7 @@ func (sphere *Sphere) getCommonState() *SceneObjectCommonState {
 
 func (sphere *Sphere) localIntersect(_ *Engine, localRay *Ray, intersections *Intersections) {
 	sphereToRay := localRay.Origin.Sub(Point(0, 0, 0))
-	a := localRay.Direction.Dot(*localRay.Direction)
+	a := localRay.Direction.Dot(localRay.Direction)
 	b := 2 * localRay.Direction.Dot(sphereToRay)
 	c := sphereToRay.Dot(sphereToRay) - 1
 	discriminant := b*b - 4*a*c

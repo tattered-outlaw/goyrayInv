@@ -5,13 +5,14 @@ import (
 )
 
 func GroupScene1(width, height int) *Scene {
+	lightScale := 0.4
 	pointLight1 := PointLight{
 		Position:  Point(-10, 10, -20),
-		Intensity: Color{R: 1, G: 1, B: 1}.Scale(0.5),
+		Intensity: Color{R: 1, G: 1, B: 1}.Scale(lightScale),
 	}
 	pointLight2 := PointLight{
 		Position:  Point(10, 5, -20),
-		Intensity: Color{R: 1, G: 1, B: 1}.Scale(0.5),
+		Intensity: Color{R: 1, G: 1, B: 1}.Scale(lightScale),
 	}
 	camera := NCamera(width, height, math.Pi/5, Point(0, 3, -20), Point(0, 0, 0), Vector(0, 1, 0))
 	scene := newScene([]PointLight{pointLight1, pointLight2}, camera)
@@ -19,6 +20,12 @@ func GroupScene1(width, height int) *Scene {
 	zSpace := 2.0
 
 	group := scene.rootGroup
+
+	middle := newSphere()
+	material := DefaultMaterial().WithColor(Color{R: 0.1, G: 0.1, B: 0.1}).WithReflectivity(0.4)
+	setMaterial(middle, material)
+	scale(middle, 1.5, 1.5, 1.5)
+	group.add(middle)
 
 	front := half()
 	translate(front, 0, 0, -zSpace)
@@ -70,29 +77,31 @@ func eighth() SceneObject {
 	outComp := math.Sqrt(outGap * outGap / 2)
 
 	sphereCentre := newSphere()
-	setMaterial(sphereCentre, DefaultMaterial().WithColor(Color{R: 1, G: 0.2, B: 1}))
+	setMaterial(sphereCentre, DefaultMaterial().WithColor(Color{R: 1, G: 0.2, B: 1}).WithReflectivity(0.025))
 	group.add(sphereCentre)
 
+	material := DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}).WithReflectivity(0.025)
+
 	sphereNE := newSphere()
-	setMaterial(sphereNE, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	setMaterial(sphereNE, material)
 	scale(sphereNE, 0.5, 0.5, 0.5)
 	translate(sphereNE, outComp, 0, outComp)
 	group.add(sphereNE)
 
 	sphereSE := newSphere()
-	setMaterial(sphereSE, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	setMaterial(sphereSE, material)
 	scale(sphereSE, 0.5, 0.5, 0.5)
 	translate(sphereSE, outComp, 0, -outComp)
 	group.add(sphereSE)
 
 	sphereSW := newSphere()
-	setMaterial(sphereSW, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	setMaterial(sphereSW, material)
 	scale(sphereSW, 0.5, 0.5, 0.5)
 	translate(sphereSW, -outComp, 0, -outComp)
 	group.add(sphereSW)
 
 	sphereNW := newSphere()
-	setMaterial(sphereNW, DefaultMaterial().WithColor(Color{R: 0.2, G: 1, B: 0.2}))
+	setMaterial(sphereNW, material)
 	scale(sphereNW, 0.5, 0.5, 0.5)
 	translate(sphereNW, -outComp, 0, outComp)
 

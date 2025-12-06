@@ -46,7 +46,7 @@ func NCamera(width, height int, fov float64, from, to, up Tuple) Camera {
 	return camera
 }
 
-func (camera Camera) rayForPixel(x, y int) Ray {
+func (camera Camera) rayForPixel(x, y int) *Ray {
 	xOffset := (float64(x) + 0.5) * camera.pixelSize
 	yOffset := (float64(y) + 0.5) * camera.pixelSize
 	worldX := camera.halfWidth - xOffset
@@ -54,5 +54,5 @@ func (camera Camera) rayForPixel(x, y int) Ray {
 	pixel := camera.transform.MulT(Point(worldX, worldY, -1))
 	origin := camera.transform.MulT(Point(0, 0, 0))
 	direction := pixel.Sub(origin).Normalize()
-	return NRay(&origin, &direction)
+	return newRay(origin, direction)
 }

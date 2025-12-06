@@ -9,6 +9,7 @@ import (
 
 const maxIntersections = 128
 const groupSplitThreshold = 10
+const maxReflections = 100
 
 type Engine struct {
 	scene             *Scene
@@ -25,7 +26,7 @@ func NewEngine(scene *Scene) *Engine {
 	}
 	rayPool := &sync.Pool{
 		New: func() interface{} {
-			return &Ray{&Tuple{}, &Tuple{}}
+			return &Ray{Tuple{}, Tuple{}}
 		},
 	}
 
@@ -42,15 +43,15 @@ func NewEngine(scene *Scene) *Engine {
 }
 
 type Ray struct {
-	Origin    *Tuple
-	Direction *Tuple
+	Origin    Tuple
+	Direction Tuple
 }
 
-func NRay(origin, direction *Tuple) Ray {
-	result := Ray{}
-	result.Origin = origin
-	result.Direction = direction
-	return result
+func newRay(origin, direction Tuple) *Ray {
+	return &Ray{
+		Origin:    origin,
+		Direction: direction,
+	}
 }
 
 func (ray *Ray) Position(t float64) Tuple {
@@ -98,16 +99,17 @@ type HitRecord struct {
 	overPoint Tuple
 	eyeV      Tuple
 	normalV   Tuple
+	reflectV  Tuple
 	inside    bool
 }
 
 func GetPixel(engine *Engine, x, y int) color.Color {
 	scene := engine.scene
 	ray := scene.camera.rayForPixel(x, y)
-	return colorAt(engine, &ray)
+	return colorAt(engine, ray, maxReflections)
 }
 
-func colorAt(engine *Engine, ray *Ray) Color {
+func colorAt(engine *Engine, ray *Ray, remaining int) Color {
 	intersectionsPool := engine.intersectionsPool
 	intersections := intersectionsPool.Get().(*Intersections)
 	defer intersections.Return(intersectionsPool)
@@ -122,7 +124,7 @@ func colorAt(engine *Engine, ray *Ray) Color {
 		} else {
 			hit := intersectionsSlice[hitIndex]
 			hitRecord := createHitRecord(&hit, ray)
-			return shadeHit(engine, hitRecord)
+			return shadeHit(engine, hitRecord, remaining)
 		}
 	}
 
@@ -146,13 +148,16 @@ func intersectObject(engine *Engine, object SceneObject, worldRay *Ray, intersec
 	object.localIntersect(engine, localRay, intersections)
 }
 
-func shadeHit(engine *Engine, record *HitRecord) Color {
-	total := Black
+func shadeHit(engine *Engine, record *HitRecord, remaining int) Color {
+	color := Black
 	for _, light := range engine.scene.pointLights {
 		shadowed := isInShadow(engine, light, record.overPoint)
-		total = total.Add(lighting(record.object.getCommonState().material, light, record.point, record.eyeV, record.normalV, shadowed))
+		surface := color.Add(lighting(record.object.getCommonState().material, light, record.point, record.eyeV, record.normalV, shadowed))
+		color = color.Add(surface)
+		reflected := reflectedColor(engine, record, remaining)
+		color = color.Add(reflected)
 	}
-	return total
+	return color
 }
 
 func lighting(material *Material, light *PointLight, point Tuple, eyeV Tuple, normalV Tuple, shadowed bool) Color {
@@ -171,6 +176,16 @@ func lighting(material *Material, light *PointLight, point Tuple, eyeV Tuple, no
 		}
 	}
 	return ambient.Add(diffuse).Add(specular)
+}
+
+func reflectedColor(engine *Engine, record *HitRecord, remaining int) Color {
+	reflectivity := record.object.getCommonState().material.Reflectivity
+	if remaining == 0 || reflectivity <= 0 {
+		return Black
+	} else {
+		reflectRay := newRay(record.overPoint, record.reflectV)
+		return colorAt(engine, reflectRay, remaining-1).Scale(reflectivity)
+	}
 }
 
 func getHitIndex(intersectionsSlice []Intersection) int {
@@ -192,6 +207,7 @@ func createHitRecord(intersect *Intersection, ray *Ray) *HitRecord {
 		normalV = normalV.Negate()
 	}
 	overPoint := point.Add(normalV.Scale(EPSILON))
+	reflectV := reflect(ray.Direction, normalV)
 	return &HitRecord{
 		t:         intersect.t,
 		object:    intersect.object,
@@ -199,6 +215,7 @@ func createHitRecord(intersect *Intersection, ray *Ray) *HitRecord {
 		overPoint: overPoint,
 		eyeV:      eyeV,
 		normalV:   normalV,
+		reflectV:  reflectV,
 		inside:    inside,
 	}
 }
@@ -238,8 +255,8 @@ func isInShadow(engine *Engine, light *PointLight, point Tuple) bool {
 	direction := v.Normalize()
 	ray := engine.rayPool.Get().(*Ray)
 	defer engine.rayPool.Put(ray)
-	ray.Origin = &point
-	ray.Direction = &direction
+	ray.Origin = point
+	ray.Direction = direction
 	intersections := engine.intersectionsPool.Get().(*Intersections)
 	defer intersections.Return(engine.intersectionsPool)
 
