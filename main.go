@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	scale := 2
+	scale := 4
 	width := 960 * scale
 	height := 540 * scale
 	start := time.Now().UnixMilli()

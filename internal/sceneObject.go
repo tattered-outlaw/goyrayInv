@@ -13,6 +13,7 @@ type SceneObjectCommonState struct {
 	material              *Material
 	bounds                *BoundingBox
 	parentSpaceBounds     *BoundingBox
+	isIdentity            bool
 	inverseTransformation *Matrix4x4
 	transposeInverse      *Matrix4x4
 }
@@ -21,6 +22,7 @@ func newSceneObjectCommonState() *SceneObjectCommonState {
 	material := DefaultMaterial()
 	return &SceneObjectCommonState{
 		transformation:        newIdentity4(),
+		isIdentity:            true,
 		inverseTransformation: newIdentity4(),
 		transposeInverse:      newIdentity4(),
 		material:              &material,
@@ -29,9 +31,17 @@ func newSceneObjectCommonState() *SceneObjectCommonState {
 
 func calculateInverseTransformations(object SceneObject) {
 	config := object.getCommonState()
-	inv := inverse4(config.transformation)
-	config.inverseTransformation = inv
-	config.transposeInverse = transpose4(inv)
+	transformation := config.transformation
+	if *transformation == Identity4 {
+		config.isIdentity = true
+		config.inverseTransformation = transformation
+		config.transposeInverse = transformation
+	} else {
+		config.isIdentity = false
+		inv := inverse4(config.transformation)
+		config.inverseTransformation = inv
+		config.transposeInverse = transpose4(inv)
+	}
 }
 
 func setParent(object SceneObject, parent SceneObject) {

@@ -9,7 +9,7 @@ import (
 
 const maxIntersections = 128
 const groupSplitThreshold = 10
-const maxReflections = 10
+const maxDepth = 10
 
 type Engine struct {
 	scene             *Scene
@@ -58,16 +58,6 @@ func (ray *Ray) Position(t float64) Tuple {
 	return ray.Origin.Add(ray.Direction.Scale(t))
 }
 
-func (ray *Ray) transformToObject(object SceneObject, localRayBuffer *Ray) {
-	t := object.getCommonState().inverseTransformation
-	o := ray.Origin
-	d := ray.Direction
-	for r := 0; r < 4; r++ {
-		localRayBuffer.Origin[r] = t[r][0]*o[0] + t[r][1]*o[1] + t[r][2]*o[2] + t[r][3]*o[3]
-		localRayBuffer.Direction[r] = t[r][0]*d[0] + t[r][1]*d[1] + t[r][2]*d[2] + t[r][3]*d[3]
-	}
-}
-
 type Intersection struct {
 	t      float64
 	object SceneObject
@@ -106,10 +96,10 @@ type HitRecord struct {
 func GetPixel(engine *Engine, x, y int) color.Color {
 	scene := engine.scene
 	ray := scene.camera.rayForPixel(x, y)
-	return colorAt(engine, ray, maxReflections)
+	return colorAt(engine, ray, 0)
 }
 
-func colorAt(engine *Engine, ray *Ray, remaining int) Color {
+func colorAt(engine *Engine, ray *Ray, depth int) Color {
 	intersectionsPool := engine.intersectionsPool
 	intersections := intersectionsPool.Get().(*Intersections)
 	defer intersections.Return(intersectionsPool)
@@ -124,7 +114,7 @@ func colorAt(engine *Engine, ray *Ray, remaining int) Color {
 		} else {
 			hit := intersectionsSlice[hitIndex]
 			hitRecord := createHitRecord(&hit, ray)
-			return shadeHit(engine, hitRecord, remaining)
+			return shadeHit(engine, hitRecord, depth)
 		}
 	}
 
@@ -141,21 +131,41 @@ func intersectShapes(engine *Engine, worldRay *Ray, intersections *Intersections
 }
 
 func intersectObject(engine *Engine, object SceneObject, worldRay *Ray, intersections *Intersections) {
-	localRay := engine.rayPool.Get().(*Ray)
-	defer engine.rayPool.Put(localRay)
-	worldRay.transformToObject(object, localRay)
+	if !object.getCommonState().isIdentity {
+		localRayBuffer := engine.rayPool.Get().(*Ray)
+		defer engine.rayPool.Put(localRayBuffer)
 
-	object.localIntersect(engine, localRay, intersections)
+		t := object.getCommonState().inverseTransformation
+
+		o := worldRay.Origin
+		d := worldRay.Direction
+
+		localRayBuffer.Origin[0] = t[0][0]*o[0] + t[0][1]*o[1] + t[0][2]*o[2] + t[0][3]*o[3]
+		localRayBuffer.Origin[1] = t[1][0]*o[0] + t[1][1]*o[1] + t[1][2]*o[2] + t[1][3]*o[3]
+		localRayBuffer.Origin[2] = t[2][0]*o[0] + t[2][1]*o[1] + t[2][2]*o[2] + t[2][3]*o[3]
+		localRayBuffer.Origin[3] = t[3][0]*o[0] + t[3][1]*o[1] + t[3][2]*o[2] + t[3][3]*o[3]
+
+		localRayBuffer.Direction[0] = t[0][0]*d[0] + t[0][1]*d[1] + t[0][2]*d[2] + t[0][3]*d[3]
+		localRayBuffer.Direction[1] = t[1][0]*d[0] + t[1][1]*d[1] + t[1][2]*d[2] + t[1][3]*d[3]
+		localRayBuffer.Direction[2] = t[2][0]*d[0] + t[2][1]*d[1] + t[2][2]*d[2] + t[2][3]*d[3]
+		localRayBuffer.Direction[3] = t[3][0]*d[0] + t[3][1]*d[1] + t[3][2]*d[2] + t[3][3]*d[3]
+
+		object.localIntersect(engine, localRayBuffer, intersections)
+	} else {
+		object.localIntersect(engine, worldRay, intersections)
+	}
 }
 
-func shadeHit(engine *Engine, record *HitRecord, remaining int) Color {
+func shadeHit(engine *Engine, record *HitRecord, depth int) Color {
 	resultColor := Black
 	for _, light := range engine.scene.pointLights {
 		shadowed := isInShadow(engine, light, record.overPoint)
 		surface := resultColor.Add(lighting(record.object.getCommonState().material, light, record.point, record.eyeV, record.normalV, shadowed))
 		resultColor = resultColor.Add(surface)
-		reflected := reflectedColor(engine, record, remaining)
-		resultColor = resultColor.Add(reflected)
+		if depth < maxDepth-1 {
+			reflected := reflectedColor(engine, record, depth)
+			resultColor = resultColor.Add(reflected)
+		}
 	}
 	return resultColor
 }
@@ -178,14 +188,13 @@ func lighting(material *Material, light *PointLight, point Tuple, eyeV Tuple, no
 	return ambient.Add(diffuse).Add(specular)
 }
 
-func reflectedColor(engine *Engine, record *HitRecord, remaining int) Color {
+func reflectedColor(engine *Engine, record *HitRecord, depth int) Color {
 	reflectivity := record.object.getCommonState().material.Reflectivity
-	if remaining == 0 || reflectivity <= 0 {
+	if reflectivity == 0 {
 		return Black
-	} else {
-		reflectRay := newRay(record.overPoint, record.reflectV)
-		return colorAt(engine, reflectRay, remaining-1).Scale(reflectivity)
 	}
+	reflectRay := newRay(record.overPoint, record.reflectV)
+	return colorAt(engine, reflectRay, depth+1).Scale(reflectivity)
 }
 
 func getHitIndex(intersectionsSlice []Intersection) int {
