@@ -14,7 +14,7 @@ func (plane Plane) getCommonState() *SceneObjectCommonState {
 	return plane.commonState
 }
 
-func (plane Plane) localIntersect(engine *Engine, localRay *Ray, intersections *Intersections) {
+func (plane Plane) localIntersect(_ *Engine, localRay *Ray, intersections *Intersections) {
 	if math.Abs(localRay.Direction[1]) < EPSILON {
 		return
 	}
@@ -22,7 +22,7 @@ func (plane Plane) localIntersect(engine *Engine, localRay *Ray, intersections *
 	intersections.add(t, plane)
 }
 
-func (plane Plane) localNormalAt(localPoint *Tuple) Tuple {
+func (plane Plane) localNormalAt(_ *Tuple) Tuple {
 	return Vector(0, 1, 0)
 }
 

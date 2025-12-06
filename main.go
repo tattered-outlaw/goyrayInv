@@ -38,8 +38,8 @@ type PixelDestination interface {
 
 func render(width, height int, engine *internal.Engine, destination PixelDestination, grNumber, grCount int, wg *sync.WaitGroup) {
 	debug := false
-	debugX := 0 // width / 2
-	debugY := 0 // height / 2
+	debugX := 959 // width / 2
+	debugY := 439 // height / 2
 	defer wg.Done()
 	for x := grNumber; x < width; x += grCount {
 		for y := 0; y < height; y++ {

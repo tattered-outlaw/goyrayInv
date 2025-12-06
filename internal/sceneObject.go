@@ -59,6 +59,10 @@ func translate(object SceneObject, x, y, z float64) {
 	transform(object, Translation(x, y, z))
 }
 
+func rotateX(object SceneObject, t float64) {
+	transform(object, RotationX(t))
+}
+
 func setMaterial(object SceneObject, material Material) {
 	object.getCommonState().material = &material
 }

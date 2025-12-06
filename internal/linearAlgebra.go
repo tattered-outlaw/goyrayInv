@@ -291,35 +291,35 @@ func (m *Matrix4x4) ScaleZ(z float64) *Matrix4x4 {
 	return m.Scale(1, 1, z)
 }
 
-func (m *Matrix4x4) RotateX(theta float64) *Matrix4x4 {
+func RotationX(theta float64) *Matrix4x4 {
 	c := math.Cos(theta)
 	s := math.Sin(theta)
-	return (&Matrix4x4{
+	return &Matrix4x4{
 		{1, 0, 0, 0},
 		{0, c, -s, 0},
 		{0, s, c, 0},
 		{0, 0, 0, 1},
-	}).mul4x4(m)
+	}
 }
 
-func (m *Matrix4x4) RotateY(theta float64) *Matrix4x4 {
+func RotationY(theta float64) *Matrix4x4 {
 	c := math.Cos(theta)
 	s := math.Sin(theta)
-	return (&Matrix4x4{
+	return &Matrix4x4{
 		{c, 0, s, 0},
 		{0, 1, 0, 0},
 		{-s, 0, c, 0},
 		{0, 0, 0, 1},
-	}).mul4x4(m)
+	}
 }
 
-func (m *Matrix4x4) RotateZ(theta float64) *Matrix4x4 {
+func RotationZ(theta float64) *Matrix4x4 {
 	c := math.Cos(theta)
 	s := math.Sin(theta)
-	return (&Matrix4x4{
+	return &Matrix4x4{
 		{c, -s, 0, 0},
 		{s, c, 0, 0},
 		{0, 0, 1, 0},
 		{0, 0, 0, 1},
-	}).mul4x4(m)
+	}
 }

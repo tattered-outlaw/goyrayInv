@@ -11,20 +11,27 @@ func GroupScene1(width, height int) *Scene {
 		Intensity: Color{R: 1, G: 1, B: 1}.Scale(lightScale),
 	}
 	pointLight2 := PointLight{
-		Position:  Point(10, 5, -20),
+		Position:  Point(50, 25, -100),
 		Intensity: Color{R: 1, G: 1, B: 1}.Scale(lightScale),
 	}
-	camera := NCamera(width, height, math.Pi/5, Point(0, 2, -50), Point(0, -2, 0), Vector(0, 1, 0))
+	camera := NCamera(width, height, math.Pi/5, Point(-10, 2, -50), Point(0, -2, 0), Vector(0, 1, 0))
 	scene := newScene([]PointLight{pointLight1, pointLight2}, camera)
 
 	zSpace := 2.0
 
 	group := scene.rootGroup
 
+	wall := newPlane()
+	rotateX(wall, -math.Pi/2)
+	translate(wall, 0, 0, 12)
+	setMaterial(wall, DefaultMaterial().WithColor(Color{R: 0.2, G: 0.2, B: 0.2}).WithReflectivity(0.0))
+	group.add(wall)
+
 	floor := newPlane()
 	translate(floor, 0, -4, 0)
 	group.add(floor)
-	setMaterial(floor, DefaultMaterial().WithColor(Color{R: 0.5, G: 0.5, B: 0.5}).WithReflectivity(0.02))
+	setMaterial(floor, DefaultMaterial().WithPattern(
+		newCheckerPattern(Color{R: 0.8, G: 0.8, B: 0.8}, Color{R: 0.1, G: 0.1, B: 0.1})).WithReflectivity(0.07))
 
 	middle := newSphere()
 	material := DefaultMaterial().WithColor(Color{R: 0.1, G: 0.1, B: 0.1}).WithReflectivity(0.4)

@@ -1,34 +1,38 @@
 package internal
 
 type Material struct {
-	Color                                               Color
+	pattern                                             Pattern
 	Ambient, Diffuse, Specular, Shininess, Reflectivity float64
 }
 
 func (m Material) WithColor(c Color) Material {
-	return Material{c, m.Ambient, m.Diffuse, m.Specular, m.Shininess, m.Reflectivity}
+	return Material{newBlankPattern(c), m.Ambient, m.Diffuse, m.Specular, m.Shininess, m.Reflectivity}
+}
+
+func (m Material) WithPattern(p Pattern) Material {
+	return Material{p, m.Ambient, m.Diffuse, m.Specular, m.Shininess, m.Reflectivity}
 }
 
 func (m Material) WithAmbient(a float64) Material {
-	return Material{m.Color, a, m.Diffuse, m.Specular, m.Shininess, m.Reflectivity}
+	return Material{m.pattern, a, m.Diffuse, m.Specular, m.Shininess, m.Reflectivity}
 }
 
 func (m Material) WithDiffuse(d float64) Material {
-	return Material{m.Color, m.Ambient, d, m.Specular, m.Shininess, m.Reflectivity}
+	return Material{m.pattern, m.Ambient, d, m.Specular, m.Shininess, m.Reflectivity}
 }
 
 func (m Material) WithSpecular(s float64) Material {
-	return Material{m.Color, m.Ambient, m.Diffuse, s, m.Shininess, m.Reflectivity}
+	return Material{m.pattern, m.Ambient, m.Diffuse, s, m.Shininess, m.Reflectivity}
 }
 
 func (m Material) WithShininess(s float64) Material {
-	return Material{m.Color, m.Ambient, m.Diffuse, m.Specular, s, m.Reflectivity}
+	return Material{m.pattern, m.Ambient, m.Diffuse, m.Specular, s, m.Reflectivity}
 }
 
 func (m Material) WithReflectivity(r float64) Material {
-	return Material{m.Color, m.Ambient, m.Diffuse, m.Specular, m.Shininess, r}
+	return Material{m.pattern, m.Ambient, m.Diffuse, m.Specular, m.Shininess, r}
 }
 
 func DefaultMaterial() Material {
-	return Material{Color: Color{1, 1, 1}, Ambient: 0.15, Diffuse: 0.9, Specular: 0.9, Shininess: 200.0, Reflectivity: 0.0}
+	return Material{pattern: newBlankPattern(Color{R: 1, G: 1, B: 1}), Ambient: 0.15, Diffuse: 0.9, Specular: 0.9, Shininess: 200.0, Reflectivity: 0.0}
 }

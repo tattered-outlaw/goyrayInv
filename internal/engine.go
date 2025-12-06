@@ -9,7 +9,7 @@ import (
 
 const maxIntersections = 128
 const groupSplitThreshold = 10
-const maxReflections = 100
+const maxReflections = 10
 
 type Engine struct {
 	scene             *Scene
@@ -149,19 +149,19 @@ func intersectObject(engine *Engine, object SceneObject, worldRay *Ray, intersec
 }
 
 func shadeHit(engine *Engine, record *HitRecord, remaining int) Color {
-	color := Black
+	resultColor := Black
 	for _, light := range engine.scene.pointLights {
 		shadowed := isInShadow(engine, light, record.overPoint)
-		surface := color.Add(lighting(record.object.getCommonState().material, light, record.point, record.eyeV, record.normalV, shadowed))
-		color = color.Add(surface)
+		surface := resultColor.Add(lighting(record.object.getCommonState().material, light, record.point, record.eyeV, record.normalV, shadowed))
+		resultColor = resultColor.Add(surface)
 		reflected := reflectedColor(engine, record, remaining)
-		color = color.Add(reflected)
+		resultColor = resultColor.Add(reflected)
 	}
-	return color
+	return resultColor
 }
 
 func lighting(material *Material, light *PointLight, point Tuple, eyeV Tuple, normalV Tuple, shadowed bool) Color {
-	effectiveColor := material.Color.Multiply(light.Intensity)
+	effectiveColor := material.pattern.localPatternAt(point).Multiply(light.Intensity)
 	lightV := light.Position.Sub(point).Normalize()
 	ambient := effectiveColor.Scale(material.Ambient)
 	lightDotNormal := lightV.Dot(normalV)
@@ -263,5 +263,6 @@ func isInShadow(engine *Engine, light *PointLight, point Tuple) bool {
 	intersectShapes(engine, ray, intersections)
 	intersectionsSlice := intersections.array[:intersections.writeIndex]
 
-	return getHitIndex(intersectionsSlice) >= 0 && intersectionsSlice[0].t < distance
+	hitIndex := getHitIndex(intersectionsSlice)
+	return hitIndex >= 0 && intersectionsSlice[hitIndex].t < distance
 }
