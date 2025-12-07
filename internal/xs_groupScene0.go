@@ -13,7 +13,7 @@ package internal
 //		Position:  Point(10, 5, -20),
 //		Intensity: Color{R: 1, G: 1, B: 1}.Scale(0.5),
 //	}
-//	camera := NCamera(width, height, math.Pi/5, Point(0, 2, -20), Point(0, 0, 0), Vector(0, 1, 0))
+//	camera := NewCamera(width, height, math.Pi/5, Point(0, 2, -20), Point(0, 0, 0), Vector(0, 1, 0))
 //	scene := NScene([]PointLight{pointLight1, pointLight2}, camera)
 //
 //	zSpace := 1.0

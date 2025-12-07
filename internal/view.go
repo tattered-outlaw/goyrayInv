@@ -26,7 +26,7 @@ type Camera struct {
 	pixelSize             float64
 }
 
-func NCamera(width, height int, fov float64, from, to, up Tuple) Camera {
+func newCamera(width, height int, fov float64, from, to, up Tuple) *Camera {
 	camera := Camera{hSize: width, vSize: height}
 	halfView := math.Tan(fov / 2)
 	aspect := float64(width) / float64(height)
@@ -43,7 +43,7 @@ func NCamera(width, height int, fov float64, from, to, up Tuple) Camera {
 		panic(err)
 	}
 	camera.transform = transform
-	return camera
+	return &camera
 }
 
 func (camera Camera) rayForPixel(x, y int) *Ray {

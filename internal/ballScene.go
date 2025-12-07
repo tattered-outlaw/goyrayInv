@@ -5,7 +5,7 @@ package internal
 //)
 //
 //func BallScene(width, height int) *Scene {
-//	camera := NCamera(width, height, math.Pi/3, Point(0, 1.5, -5), Point(0, 1, 0), Vector(0, 1, 0))
+//	camera := NewCamera(width, height, math.Pi/3, Point(0, 1.5, -5), Point(0, 1, 0), Vector(0, 1, 0))
 //	lightCount := 2.0
 //	light1 := PointLight{
 //		Position:  Point(-10, 10, -10),

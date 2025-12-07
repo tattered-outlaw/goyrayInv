@@ -9,7 +9,7 @@ package internal
 //		Position:  Point(-10, 10, -10),
 //		Intensity: Color{R: 1, G: 1, B: 1},
 //	}
-//	camera := NCamera(width, height, math.Pi/4, Point(0, 0, -8), Point(0, 0, 0), Vector(0, 1, 0))
+//	camera := NewCamera(width, height, math.Pi/4, Point(0, 0, -8), Point(0, 0, 0), Vector(0, 1, 0))
 //	scene := NScene([]PointLight{pointLight}, camera)
 //
 //	group := &Group{}
